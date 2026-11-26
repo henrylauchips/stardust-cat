@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover"
+  />
+  <title>星塵貓大作戰</title>
+
+  <!-- PWA 與 iOS 主畫面全螢幕設定 -->
+  <link rel="manifest" href="./manifest.json" />
+  <meta name="theme-color" content="#1e2749" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="星塵貓大作戰" />
+  <meta name="format-detection" content="telephone=no, email=no, address=no" />
+
+  <link
+    rel="icon"
+    type="image/svg+xml"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'%3E%3Crect width='128' height='128' rx='28' fill='%231e2749'/%3E%3Cpath d='M38 55 L44 34 L59 46 L69 46 L84 34 L90 55 C96 62 98 71 96 81 C93 96 80 104 64 104 C48 104 35 96 32 81 C30 71 32 62 38 55 Z' fill='%23fff7eb'/%3E%3Ccircle cx='53' cy='72' r='4' fill='%231e1e2e'/%3E%3Ccircle cx='75' cy='72' r='4' fill='%231e1e2e'/%3E%3Cpath d='M64 20 L67 28 L75 31 L67 34 L64 42 L61 34 L53 31 L61 28 Z' fill='%23ffd166'/%3E%3C/svg%3E"
+  />
+  <link
+    rel="apple-touch-icon"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' fill='%231e2749'/%3E%3Cpath d='M54 78 L62 49 L82 65 L98 65 L118 49 L126 78 C134 88 138 100 135 114 C131 135 112 146 90 146 C68 146 49 135 45 114 C42 100 46 88 54 78 Z' fill='%23fff7eb'/%3E%3Ccircle cx='74' cy='101' r='6' fill='%231e1e2e'/%3E%3Ccircle cx='106' cy='101' r='6' fill='%231e1e2e'/%3E%3Cpath d='M90 28 L94 39 L105 43 L94 47 L90 58 L86 47 L75 43 L86 39 Z' fill='%23ffd166'/%3E%3C/svg%3E"
+  />
+
+  <style>
+    :root {
+      --bg-night: #1e2749;
+      --bg-deep: #131932;
+      --accent-gold: #ffd166;
+      --accent-pink: #ff9ebb;
+      --accent-cyan: #9bf6ff;
+      --text-main: #f8f9fc;
+      --text-muted: #b9c3de;
+      --panel-bg: rgba(20, 27, 56, 0.84);
+      --panel-border: rgba(255, 255, 255, 0.14);
+
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-right: env(safe-area-inset-right, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --safe-left: env(safe-area-inset-left, 0px);
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      position: fixed;
+      inset: 0;
+      background-color: var(--bg-night);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang TC", "Hiragino Sans TC", "Noto Sans TC", sans-serif;
+      overscroll-behavior: none;
+      touch-action: none;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    #app {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      height: 100dvh;
+      overflow: hidden;
+      background: radial-gradient(circle at 50% 35%, #273469 0%, #1e2749 58%, #131932 100%);
+      touch-action: none;
+    }
+
+    #game-canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+    }
+
+    #ui-layer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding-top: calc(var(--safe-top) + 10px);
+      padding-right: calc(var(--safe-right) + 14px);
+      padding-bottom: calc(var(--safe-bottom) + 12px);
+      padding-left: calc(var(--safe-left) + 14px);
+      z-index: 10;
+    }
+
+    #hud-top {
+      width: 100%;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      pointer-events: none;
+    }
+
+    #hud-bottom {
+      width: 100%;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 10px;
+      pointer-events: none;
+    }
+
+    #overlay-root {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding-top: calc(var(--safe-top) + 16px);
+      padding-right: calc(var(--safe-right) + 16px);
+      padding-bottom: calc(var(--safe-bottom) + 16px);
+      padding-left: calc(var(--safe-left) + 16px);
+    }
+
+    #overlay-root.active {
+      pointer-events: auto;
+      background: rgba(11, 15, 34, 0.62);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+
+    #toast-container {
+      position: fixed;
+      top: calc(var(--safe-top) + 12px);
+      left: calc(var(--safe-left) + 16px);
+      right: calc(var(--safe-right) + 16px);
+      z-index: 30;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .unlock-toast {
+      width: 100%;
+      max-width: 340px;
+      padding: 10px 14px;
+      border-radius: 16px;
+      background: var(--panel-bg);
+      border: 1px solid rgba(255, 209, 102, 0.48);
+      box-shadow: 0 10px 26px rgba(8, 12, 30, 0.45);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--text-main);
+      animation: toast-in 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    .unlock-toast.leaving {
+      animation: toast-out 220ms ease-in forwards;
+    }
+
+    .ui-interactive {
+      pointer-events: auto;
+      touch-action: manipulation;
+    }
+
+    button {
+      font-family: inherit;
+      cursor: pointer;
+      border: none;
+      outline: none;
+      touch-action: manipulation;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    @keyframes toast-in {
+      from {
+        opacity: 0;
+        transform: translateY(-14px) scale(0.96);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @keyframes toast-out {
+      from {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+      to {
+        opacity: 0;
+        transform: translateY(-10px) scale(0.96);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <canvas id="game-canvas" aria-label="星塵貓大作戰遊戲畫布"></canvas>
+
+    <div id="ui-layer" aria-live="polite">
+      <div id="hud-top"></div>
+      <div id="hud-bottom"></div>
+    </div>
+
+    <div id="overlay-root"></div>
+    <div id="toast-container" aria-live="polite"></div>
+  </div>
+
+  <script>
+    (function lockIOSGestures() {
+      const prevent = (event) => {
+        event.preventDefault();
+      };
+
+      document.addEventListener('gesturestart', prevent, { passive: false });
+      document.addEventListener('gesturechange', prevent, { passive: false });
+      document.addEventListener('gestureend', prevent, { passive: false });
+      document.addEventListener('contextmenu', prevent, { passive: false });
+
+      let lastTouchEndTime = 0;
+      document.addEventListener(
+        'touchend',
+        (event) => {
+          const now = Date.now();
+          if (now - lastTouchEndTime <= 300) {
+            event.preventDefault();
+          }
+          lastTouchEndTime = now;
+        },
+        { passive: false }
+      );
+    })();
+  </script>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
