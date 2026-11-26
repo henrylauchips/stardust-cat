@@ -963,7 +963,7 @@ export class SoundManager {
     for (let i = 0; i < notes.length; i++) {
       const t = now + i * 0.075;
       const osc = this.ctx.createOscillator();
-      const gain = ctx.createGain();
+      const gain = this.ctx.createGain();
 
       osc.type = 'triangle';
       osc.frequency.setValueAtTime(midiToFreq(notes[i]), t);
