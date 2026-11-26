@@ -1348,4 +1348,359 @@ export class GameUI {
     for (let i = 0; i < this.catPreviewCanvases.length; i++) {
       const entry = this.catPreviewCanvases[i];
       const ctx = entry.ctx;
-      if (!
+            if (!ctx) {
+        continue;
+      }
+      ctx.clearRect(0, 0, entry.canvas.width, entry.canvas.height);
+      drawCat(ctx, entry.catId, 72, 86, {
+        time: time + i * 0.6,
+        moving: i === this.menuFocusedCatIndex,
+        facing: 1,
+        scale: 2.15,
+        showShadow: true,
+      });
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // 成就列表彈窗
+  // -------------------------------------------------------------------------
+
+  showAchievementsModal({ storage, onClose }) {
+    const save = storage.getData();
+    const rowsHtml = ACHIEVEMENTS.map((ach) => {
+      const unlocked = storage.isAchievementUnlocked(ach.id);
+      return `
+        <div class="ach-row ${unlocked ? 'unlocked' : ''}">
+          <div class="ach-icon">${unlocked ? '🌟' : '🔒'}</div>
+          <div>
+            <div class="ach-title">${escapeHtml(ach.name)}</div>
+            <div class="ach-desc">${escapeHtml(ach.desc)}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    this._setOverlayHtml(`
+      <div class="panel-card ui-interactive">
+        <div class="menu-header">
+          <div>
+            <h2 class="menu-title" style="font-size:20px;">🏆 星夜成就手冊</h2>
+            <p class="menu-subtitle">已達成 ${save.unlockedAchievements.length} / ${ACHIEVEMENTS.length} 項成就</p>
+          </div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-tile">
+            <div class="stat-val">✦ ${save.totalStars}</div>
+            <div class="stat-label">累計收集星塵</div>
+          </div>
+          <div class="stat-tile">
+            <div class="stat-val">🫧 ${save.totalKills}</div>
+            <div class="stat-label">累計安撫小怪</div>
+          </div>
+          <div class="stat-tile">
+            <div class="stat-val">${Math.floor(save.bestNoHitSec)}s</div>
+            <div class="stat-label">最長連續無傷</div>
+          </div>
+          <div class="stat-tile">
+            <div class="stat-val">${save.clearedStages.length} / ${STAGES.length}</div>
+            <div class="stat-label">通關關卡數</div>
+          </div>
+        </div>
+
+        <div class="ach-list">${rowsHtml}</div>
+
+        <button type="button" class="primary-btn" data-action="close">返回選單</button>
+      </div>
+    `);
+
+    this.overlayRootEl.querySelector('[data-action="close"]').addEventListener('click', () => {
+      if (typeof onClose === 'function') {
+        onClose();
+      }
+    });
+  }
+
+  // -------------------------------------------------------------------------
+  // 升級三選一大按鈕卡片（含 260ms 防誤觸保護）
+  // -------------------------------------------------------------------------
+
+  showLevelUpChoices({ level, choices, onSelect }) {
+    this._levelUpUnlockAt = performance.now() + 260;
+
+    const cardsHtml = choices
+      .map((card, index) => {
+        const badgeClass =
+          card.kind === 'passive'
+            ? 'is-passive'
+            : card.currentLv === 0
+              ? 'is-new'
+              : '';
+        return `
+          <button type="button" class="upgrade-card-btn ui-interactive" data-choice-idx="${index}">
+            <div class="upgrade-icon">${card.icon || '✦'}</div>
+            <div class="upgrade-body">
+              <div class="upgrade-top-line">
+                <span class="upgrade-name">${escapeHtml(card.name)}</span>
+                <span class="upgrade-badge ${badgeClass}">${escapeHtml(card.badge)}</span>
+              </div>
+              <div class="upgrade-desc">${escapeHtml(card.desc)}</div>
+            </div>
+          </button>
+        `;
+      })
+      .join('');
+
+    this._setOverlayHtml(`
+      <div class="panel-card ui-interactive">
+        <div class="levelup-header">
+          <h2 class="levelup-title">✦ 星塵升級・Lv.${level} ✦</h2>
+          <p class="levelup-sub">選擇一項祝福強化你的星塵貓</p>
+        </div>
+        <div class="upgrade-list">${cardsHtml}</div>
+      </div>
+    `);
+
+    this.overlayRootEl.querySelectorAll('[data-choice-idx]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        if (performance.now() < this._levelUpUnlockAt) {
+          return;
+        }
+        const idx = Number(btn.getAttribute('data-choice-idx'));
+        const chosen = choices[idx];
+        if (chosen && typeof onSelect === 'function') {
+          onSelect(chosen);
+        }
+      });
+    });
+  }
+
+  // -------------------------------------------------------------------------
+  // 暫停選單
+  // -------------------------------------------------------------------------
+
+  showPauseMenu({ stage, weaponSystem, muted, autoPaused, handlers }) {
+    const owned = weaponSystem ? weaponSystem.getOwnedWeaponIds() : [];
+    const weaponsHtml = owned
+      .map((id) => {
+        const spec = WEAPONS[id];
+        return `<span class="hud-weapon-chip">${spec.icon} ${escapeHtml(spec.name)} <span class="hud-weapon-lv">Lv.${weaponSystem.getLevel(id)}</span></span>`;
+      })
+      .join('');
+
+    this._setOverlayHtml(`
+      <div class="panel-card ui-interactive">
+        <div class="levelup-header">
+          <h2 class="levelup-title">🌙 休息一下</h2>
+          <p class="levelup-sub">${autoPaused ? '偵測到切換畫面，已為你安全暫停' : `第 ${stage.id} 關・${escapeHtml(stage.name)}`}</p>
+        </div>
+
+        <div class="hud-weapons-strip" style="justify-content:center;">${weaponsHtml}</div>
+
+        <button type="button" class="primary-btn" data-action="resume">繼續星夜散步</button>
+        <button type="button" class="secondary-btn" data-action="mute">${muted ? '🔇 音樂音效：已靜音（點擊開啟）' : '🔊 音樂音效：開啟中（點擊靜音）'}</button>
+        <button type="button" class="secondary-btn" data-action="restart">重新挑戰本關</button>
+        <button type="button" class="secondary-btn" data-action="menu">返回主選單</button>
+      </div>
+    `);
+
+    const root = this.overlayRootEl;
+    root.querySelector('[data-action="resume"]').addEventListener('click', () => {
+      if (handlers && typeof handlers.onResume === 'function') {
+        handlers.onResume();
+      }
+    });
+
+    const muteBtn = root.querySelector('[data-action="mute"]');
+    muteBtn.addEventListener('click', () => {
+      if (handlers && typeof handlers.onToggleMute === 'function') {
+        const nextMuted = handlers.onToggleMute();
+        muteBtn.textContent = nextMuted
+          ? '🔇 音樂音效：已靜音（點擊開啟）'
+          : '🔊 音樂音效：開啟中（點擊靜音）';
+      }
+    });
+
+    root.querySelector('[data-action="restart"]').addEventListener('click', () => {
+      if (handlers && typeof handlers.onRestart === 'function') {
+        handlers.onRestart();
+      }
+    });
+
+    root.querySelector('[data-action="menu"]').addEventListener('click', () => {
+      if (handlers && typeof handlers.onBackToMenu === 'function') {
+        handlers.onBackToMenu();
+      }
+    });
+  }
+
+  // -------------------------------------------------------------------------
+  // 通關／結束結算面板
+  // -------------------------------------------------------------------------
+
+  showResultScreen({ victory, stage, player, allCleared, handlers }) {
+    const nextStage = STAGES.find((s) => s.id === stage.id + 1) || null;
+    const title = victory ? '✦ 星夜安撫成功！✦' : '🌙 貓咪累了，先打個盹';
+    const sub = victory
+      ? `成功守護「${stage.name}」，星塵更加閃耀了`
+      : `在「${stage.name}」收集了許多星塵，再試一次吧`;
+
+    const primaryActionHtml =
+      victory && allCleared
+        ? `<button type="button" class="primary-btn" data-action="ending">✨ 進入星空茶會 Ending</button>`
+        : victory && nextStage
+          ? `<button type="button" class="primary-btn" data-action="nextStage">前往第 ${nextStage.id} 關・${escapeHtml(nextStage.name)}</button>`
+          : `<button type="button" class="primary-btn" data-action="retry">再玩一次本關</button>`;
+
+    this._setOverlayHtml(`
+      <div class="panel-card ui-interactive">
+        <div class="levelup-header">
+          <h2 class="levelup-title">${title}</h2>
+          <p class="levelup-sub">${escapeHtml(sub)}</p>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-tile">
+            <div class="stat-val">✦ ${player.starsCollected}</div>
+            <div class="stat-label">本局收集星塵</div>
+          </div>
+          <div class="stat-tile">
+            <div class="stat-val">🫧 ${player.kills}</div>
+            <div class="stat-label">本局安撫小怪</div>
+          </div>
+          <div class="stat-tile">
+            <div class="stat-val">${Math.floor(player.bestNoHitSec)}s</div>
+            <div class="stat-label">最長連續無傷</div>
+          </div>
+          <div class="stat-tile">
+            <div class="stat-val">Lv.${player.level}</div>
+            <div class="stat-label">最終達成等級</div>
+          </div>
+        </div>
+
+        ${primaryActionHtml}
+        ${victory && nextStage && !allCleared ? '<button type="button" class="secondary-btn" data-action="retry">重玩本關</button>' : ''}
+        <button type="button" class="secondary-btn" data-action="menu">返回選單換貓咪</button>
+      </div>
+    `);
+
+    const root = this.overlayRootEl;
+    const endingBtn = root.querySelector('[data-action="ending"]');
+    if (endingBtn) {
+      endingBtn.addEventListener('click', () => {
+        if (handlers && typeof handlers.onOpenEnding === 'function') {
+          handlers.onOpenEnding();
+        }
+      });
+    }
+
+    const nextBtn = root.querySelector('[data-action="nextStage"]');
+    if (nextBtn && nextStage) {
+      nextBtn.addEventListener('click', () => {
+        if (handlers && typeof handlers.onNextStage === 'function') {
+          handlers.onNextStage(nextStage.id);
+        }
+      });
+    }
+
+    const retryBtn = root.querySelector('[data-action="retry"]');
+    if (retryBtn) {
+      retryBtn.addEventListener('click', () => {
+        if (handlers && typeof handlers.onRetry === 'function') {
+          handlers.onRetry();
+        }
+      });
+    }
+
+    root.querySelector('[data-action="menu"]').addEventListener('click', () => {
+      if (handlers && typeof handlers.onBackToMenu === 'function') {
+        handlers.onBackToMenu();
+      }
+    });
+  }
+
+  // -------------------------------------------------------------------------
+  // 星空茶會 Ending 輕量操作列（不擋點擊綻放像素煙火）
+  // -------------------------------------------------------------------------
+
+  showEndingControls({ muted, handlers }) {
+    this.clearOverlay();
+    this.hudMounted = false;
+    this.hudRefs = null;
+
+    this.hudTopEl.innerHTML = `
+      <div class="ending-hud-bar">
+        <button type="button" class="hud-icon-btn ui-interactive" data-ref="endingMute" aria-label="切換靜音">${muted ? '🔇' : '🔊'}</button>
+        <button type="button" class="menu-pill-btn ui-interactive" data-ref="endingBack">返回選單</button>
+      </div>
+    `;
+    this.hudBottomEl.innerHTML = '';
+
+    const muteBtn = this.hudTopEl.querySelector('[data-ref="endingMute"]');
+    muteBtn.addEventListener('click', (event) => {
+      event.stopPropagation();
+      if (handlers && typeof handlers.onToggleMute === 'function') {
+        const nextMuted = handlers.onToggleMute();
+        muteBtn.textContent = nextMuted ? '🔇' : '🔊';
+      }
+    });
+
+    this.hudTopEl.querySelector('[data-ref="endingBack"]').addEventListener('click', (event) => {
+      event.stopPropagation();
+      if (handlers && typeof handlers.onBackToMenu === 'function') {
+        handlers.onBackToMenu();
+      }
+    });
+  }
+
+  // -------------------------------------------------------------------------
+  // 成就與角色新解鎖溫馨上方橫幅（顯示 2.5 秒不擋路自動淡出）
+  // -------------------------------------------------------------------------
+
+  showUnlockToasts(items) {
+    if (!Array.isArray(items) || items.length === 0) {
+      return;
+    }
+    for (let i = 0; i < items.length; i++) {
+      this._toastQueue.push(items[i]);
+    }
+    if (!this._toastBusy) {
+      this._processNextToast();
+    }
+  }
+
+  _processNextToast() {
+    if (this._toastQueue.length === 0) {
+      this._toastBusy = false;
+      return;
+    }
+
+    this._toastBusy = true;
+    const item = this._toastQueue.shift();
+    const icon = item.type === 'cat' ? '🐱' : '🌟';
+
+    const el = document.createElement('div');
+    el.className = 'unlock-toast';
+    el.innerHTML = `
+      <div class="toast-icon">${icon}</div>
+      <div class="toast-text">
+        <div class="toast-sub">${escapeHtml(item.subtitle || '達成新成就')}</div>
+        <div class="toast-name">${escapeHtml(item.name)}</div>
+      </div>
+    `;
+    this.toastContainerEl.appendChild(el);
+
+    // 停留 2.5 秒後平滑滑出
+    window.setTimeout(() => {
+      el.classList.add('leaving');
+      window.setTimeout(() => {
+        if (el.parentNode) {
+          el.parentNode.removeChild(el);
+        }
+        this._processNextToast();
+      }, 240);
+    }, 2500);
+  }
+}
+
