@@ -881,6 +881,104 @@ export class SoundManager {
     osc.start(now);
     osc.stop(now + 0.1);
   }
+    startBossBgm() {
+    this.startBgm('boss_battle', 128);
+  }
+
+  _playSoftKick(time, volume = 0.18) {
+    const ctx = this.ctx;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(125, time);
+    osc.frequency.exponentialRampToValueAtTime(44, time + 0.11);
+
+    gain.gain.setValueAtTime(0.0001, time);
+    gain.gain.linearRampToValueAtTime(volume, time + 0.006);
+    gain.gain.exponentialRampToValueAtTime(0.0008, time + 0.14);
+
+    osc.connect(gain);
+    gain.connect(this.bgmGain);
+    osc.start(time);
+    osc.stop(time + 0.16);
+  }
+
+  _playBossLead(freq, time, duration, volume) {
+    const ctx = this.ctx;
+    const osc = ctx.createOscillator();
+    const filter = ctx.createBiquadFilter();
+    const gain = ctx.createGain();
+
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(freq, time);
+
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(2200, time);
+    filter.frequency.exponentialRampToValueAtTime(900, time + duration);
+
+    gain.gain.setValueAtTime(0.0001, time);
+    gain.gain.linearRampToValueAtTime(volume, time + 0.008);
+    gain.gain.exponentialRampToValueAtTime(0.0008, time + duration);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.bgmGain);
+    osc.start(time);
+    osc.stop(time + duration + 0.03);
+  }
+
+  _playBossBass(freq, time, duration, volume) {
+    const ctx = this.ctx;
+    const osc = ctx.createOscillator();
+    const filter = ctx.createBiquadFilter();
+    const gain = ctx.createGain();
+
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(freq, time);
+
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(520, time);
+
+    gain.gain.setValueAtTime(0.0001, time);
+    gain.gain.linearRampToValueAtTime(volume, time + 0.008);
+    gain.gain.exponentialRampToValueAtTime(0.0008, time + duration);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.bgmGain);
+    osc.start(time);
+    osc.stop(time + duration + 0.03);
+  }
+
+  /**
+   * 新一波敵人登場提示音（清亮三音上升號角，提醒玩家注意怪潮）
+   */
+  playWaveAlert() {
+    if (!this._canPlaySfx()) {
+      return;
+    }
+    const now = this.ctx.currentTime;
+    const notes = [67, 71, 74, 79]; // G4 → B4 → D5 → G5 明亮號角
+    for (let i = 0; i < notes.length; i++) {
+      const t = now + i * 0.075;
+      const osc = this.ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(midiToFreq(notes[i]), t);
+
+      gain.gain.setValueAtTime(0.0001, t);
+      gain.gain.linearRampToValueAtTime(0.22, t + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0008, t + 0.28);
+
+      osc.connect(gain);
+      gain.connect(this.sfxGain);
+      osc.start(t);
+      osc.stop(t + 0.3);
+    }
+  }
+
 }
 
 export const audio = new SoundManager();
