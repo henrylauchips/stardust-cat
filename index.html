@@ -252,6 +252,14 @@
     })();
   </script>
 
-  <script type="module" src="./src/main.js"></script>
+  <script>
+  import('./src/main.js?v=' + Date.now()).catch((err) => {
+    const box = document.createElement('pre');
+    box.style.cssText = 'position:fixed;inset:60px 12px auto;z-index:9999;background:#2b1122;color:#ff9ebb;padding:14px;border-radius:12px;font-size:13px;white-space:pre-wrap;word-break:break-all;border:1px solid #ff9ebb;';
+    box.textContent = '載入失敗：\n' + (err && err.stack ? err.stack : String(err));
+    document.body.appendChild(box);
+  });
+</script>
+
 </body>
 </html>
