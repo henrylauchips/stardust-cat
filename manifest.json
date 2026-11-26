@@ -1,0 +1,28 @@
+{
+  "name": "星塵貓大作戰",
+  "short_name": "星塵貓",
+  "description": "專為直向單手遊玩打造的 2D 療癒系星夜輕肉鴿小遊戲",
+  "lang": "zh-Hant",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["standalone", "fullscreen"],
+  "orientation": "portrait",
+  "background_color": "#1e2749",
+  "theme_color": "#1e2749",
+  "categories": ["games"],
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%231e2749'/%3E%3Ccircle cx='116' cy='112' r='10' fill='%23ffd166' opacity='0.9'/%3E%3Ccircle cx='396' cy='102' r='7' fill='%239bf6ff' opacity='0.85'/%3E%3Ccircle cx='418' cy='214' r='6' fill='%23ff9ebb' opacity='0.85'/%3E%3Ccircle cx='96' cy='280' r='8' fill='%23ffd166' opacity='0.7'/%3E%3Cpath d='M154 220 L176 138 L234 186 L278 186 L336 138 L358 220 C382 248 392 284 384 324 C372 384 320 416 256 416 C192 416 140 384 128 324 C120 284 130 248 154 220 Z' fill='%23fff7eb'/%3E%3Ccircle cx='212' cy='286' r='16' fill='%231e1e2e'/%3E%3Ccircle cx='300' cy='286' r='16' fill='%231e1e2e'/%3E%3Ccircle cx='207' cy='280' r='5' fill='%23ffffff'/%3E%3Ccircle cx='295' cy='280' r='5' fill='%23ffffff'/%3E%3Cellipse cx='182' cy='316' rx='18' ry='10' fill='%23ff9ebb' opacity='0.55'/%3E%3Cellipse cx='330' cy='316' rx='18' ry='10' fill='%23ff9ebb' opacity='0.55'/%3E%3Cpath d='M240 314 Q256 328 272 314' fill='none' stroke='%231e1e2e' stroke-width='9' stroke-linecap='round'/%3E%3Cpath d='M256 84 L266 112 L294 122 L266 132 L256 160 L246 132 L218 122 L246 112 Z' fill='%23ffd166'/%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%231e2749'/%3E%3Ccircle cx='116' cy='112' r='10' fill='%23ffd166' opacity='0.9'/%3E%3Ccircle cx='396' cy='102' r='7' fill='%239bf6ff' opacity='0.85'/%3E%3Ccircle cx='418' cy='214' r='6' fill='%23ff9ebb' opacity='0.85'/%3E%3Ccircle cx='96' cy='280' r='8' fill='%23ffd166' opacity='0.7'/%3E%3Cpath d='M154 220 L176 138 L234 186 L278 186 L336 138 L358 220 C382 248 392 284 384 324 C372 384 320 416 256 416 C192 416 140 384 128 324 C120 284 130 248 154 220 Z' fill='%23fff7eb'/%3E%3Ccircle cx='212' cy='286' r='16' fill='%231e1e2e'/%3E%3Ccircle cx='300' cy='286' r='16' fill='%231e1e2e'/%3E%3Ccircle cx='207' cy='280' r='5' fill='%23ffffff'/%3E%3Ccircle cx='295' cy='280' r='5' fill='%23ffffff'/%3E%3Cellipse cx='182' cy='316' rx='18' ry='10' fill='%23ff9ebb' opacity='0.55'/%3E%3Cellipse cx='330' cy='316' rx='18' ry='10' fill='%23ff9ebb' opacity='0.55'/%3E%3Cpath d='M240 314 Q256 328 272 314' fill='none' stroke='%231e1e2e' stroke-width='9' stroke-linecap='round'/%3E%3Cpath d='M256 84 L266 112 L294 122 L266 132 L256 160 L246 132 L218 122 L246 112 Z' fill='%23ffd166'/%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
