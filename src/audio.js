@@ -332,7 +332,26 @@ export class SoundManager {
     }
   }
 
-  _schedulePatternStep(theme, pattern, step, time, stepDur) {
+    _schedulePatternStep(theme, pattern, step, time, stepDur) {
+    if (theme === 'boss_battle') {
+      const m = pattern.melody[step];
+      if (m !== null && m !== undefined) {
+        this._playBossLead(midiToFreq(m), time, stepDur * 1.45, 0.16);
+      }
+      const b = pattern.bass[step];
+      if (b !== null && b !== undefined) {
+        this._playBossBass(midiToFreq(b), time, stepDur * 0.9, 0.17);
+      }
+      // 動感四拍底鼓與輕快反拍刷鈸
+      if (step % 4 === 0) {
+        this._playSoftKick(time, 0.24);
+      }
+      if (step % 4 === 2) {
+        this._playSoftBrush(time, 0.085);
+      }
+      return;
+    }
+
     if (theme === 'musicbox') {
       const m = pattern.melody[step];
       if (m !== null && m !== undefined) {
@@ -346,6 +365,10 @@ export class SoundManager {
       if (b !== null && b !== undefined) {
         this._playWarmPadNote(midiToFreq(b), time, stepDur * 7.2, 0.14);
       }
+      // 輕柔心跳小底鼓，讓八音盒更有前進感
+      if (step % 8 === 0 || step % 8 === 6) {
+        this._playSoftKick(time, 0.1);
+      }
       return;
     }
 
@@ -353,7 +376,6 @@ export class SoundManager {
       const chord = pattern.chords[step];
       if (chord) {
         for (let i = 0; i < chord.length; i++) {
-          // 輕微人味琶音延遲，模擬電鋼琴溫柔滾奏
           this._playEpianoNote(midiToFreq(chord[i]), time + i * 0.018, stepDur * 7.6, 0.09);
         }
       }
@@ -365,14 +387,17 @@ export class SoundManager {
       if (b !== null && b !== undefined) {
         this._playWarmPadNote(midiToFreq(b), time, stepDur * 2.6, 0.15);
       }
-      // 極輕柔 Lo-Fi 爵士鼓刷節拍（拍點 2 與 4）
+      // 暖感 Lo-Fi 底鼓＋爵士刷鈸
+      if (step % 8 === 0 || step % 8 === 5) {
+        this._playSoftKick(time, 0.15);
+      }
       if (step % 4 === 2) {
-        this._playSoftBrush(time, 0.045);
+        this._playSoftBrush(time, 0.055);
       }
       return;
     }
 
-    // koto_pentatonic：和風古箏撥弦 + 溫泉竹笛長音
+    // koto_pentatonic：和風古箏撥弦 + 溫泉竹笛 + 輕柔太鼓節拍
     const m = pattern.melody[step];
     if (m !== null && m !== undefined) {
       this._playKotoPluck(midiToFreq(m), time, 0.22, 0.95);
@@ -385,7 +410,11 @@ export class SoundManager {
     if (fluteMidi !== undefined) {
       this._playWarmPadNote(midiToFreq(fluteMidi), time, stepDur * 14, 0.075);
     }
+    if (step % 8 === 0 || step % 8 === 4) {
+      this._playSoftKick(time, 0.13);
+    }
   }
+
 
   // -------------------------------------------------------------------------
   // 3 種治癒音色合成器（八音盒、Lo-Fi 電鋼琴、和風古箏）
