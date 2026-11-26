@@ -733,8 +733,17 @@ export class EnemyPool {
     }
 
     const base = ENEMY_ARCHETYPES[type] || ENEMY_ARCHETYPES.dandelion;
-    const timeHpScale = 1 + (elapsedSec / GAME_CONFIG.STAGE_DURATION) * 0.65;
-    const timeSpdScale = 1 + (elapsedSec / GAME_CONFIG.STAGE_DURATION) * 0.16;
+        // 漸進式血量曲線：前 20 秒偏軟（方便二、三關開局升級），20 秒後平滑增強
+    let timeHpScale;
+    if (elapsedSec < 20) {
+      timeHpScale = 0.52 + (elapsedSec / 20) * 0.24; // 0.52 → 0.76
+    } else if (elapsedSec < 75) {
+      timeHpScale = 0.76 + ((elapsedSec - 20) / 55) * 0.44; // 0.76 → 1.20
+    } else {
+      const lateRatio = Math.min(1, (elapsedSec - 75) / Math.max(1, GAME_CONFIG.STAGE_DURATION - 75));
+      timeHpScale = 1.2 + lateRatio * 0.45; // 1.20 → 1.65
+    }
+    const timeSpdScale = 0.92 + (elapsedSec / GAME_CONFIG.STAGE_DURATION) * 0.24;
 
     enemy.uid = this._nextUid++;
     enemy.type = base.type;
