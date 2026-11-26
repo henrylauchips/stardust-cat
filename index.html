@@ -251,42 +251,8 @@
       );
     })();
   </script>
-
-   <script>
-    (async function diagnoseModules() {
-      const box = document.createElement('pre');
-      box.style.cssText = 'position:fixed;inset:56px 12px auto;z-index:9999;background:#1a1d36;color:#f8f9fc;padding:14px;border-radius:14px;font-size:13px;line-height:1.6;white-space:pre-wrap;word-break:break-all;border:1px solid #ffd166;';
-      box.textContent = '正在逐一檢查 9 個模組...\n';
-      document.body.appendChild(box);
-
-      const files = [
-        'config.js',
-        'storage.js',
-        'sprites.js',
-        'audio.js',
-        'entities.js',
-        'weapons.js',
-        'levels.js',
-        'ui.js',
-        'main.js',
-      ];
-
-      const v = Date.now();
-      for (const name of files) {
-        try {
-          await import('./src/' + name + '?v=' + v);
-          box.textContent += '✅ ' + name + '\n';
-        } catch (err) {
-          box.style.background = '#2b1122';
-          box.style.borderColor = '#ff9ebb';
-          box.textContent += '❌ ' + name + ' 出錯：\n' + (err && err.message ? err.message : String(err)) + '\n';
-          return;
-        }
-      }
-
-      box.textContent += '\n🎉 全部 9 個檔案語法都正常！';
-    })();
-  </script>
+  
+   <script type="module" src="./src/main.js"></script>
 
 </body>
 </html>
