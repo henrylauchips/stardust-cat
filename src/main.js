@@ -25,7 +25,7 @@ import {
 } from './weapons.js';
 import { LevelDirector, StarryTeaPartyEnding } from './levels.js';
 import { audio } from './audio.js';
-import { GameUI } from './ui.js';
+import { GameUI } from './ui.js?v=2';
 
 const STATE = {
   MENU: 'MENU',
