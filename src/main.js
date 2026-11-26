@@ -787,6 +787,19 @@ class StardustCatApp {
   }
 }
 
-window.addEventListener('DOMContentLoaded', () => {
-  new StardustCatApp();
-});
+function startStardustApp() {
+  try {
+    new StardustCatApp();
+  } catch (err) {
+    const box = document.createElement('pre');
+    box.style.cssText = 'position:fixed;inset:60px 12px auto;z-index:999;background:#2b1122;color:#ff9ebb;padding:12px;border-radius:12px;font-size:12px;white-space:pre-wrap;word-break:break-all;';
+    box.textContent = '啟動錯誤：' + (err && err.stack ? err.stack : String(err));
+    document.body.appendChild(box);
+  }
+}
+
+if (document.readyState === 'loading') {
+  window.addEventListener('DOMContentLoaded', startStardustApp, { once: true });
+} else {
+  startStardustApp();
+}
