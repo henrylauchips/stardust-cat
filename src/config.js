@@ -182,7 +182,7 @@ export const STAGES = [
     hpScale: 1.0,
     speedScale: 1.0,
     enemies: ['dandelion', 'box_slime'],
-    boss: { id: 'boss_box_king', name: '巨型紙箱貓王', hp: 6000, speed: 86 },
+    boss: { id: 'boss_box_king', name: '巨型紙箱貓王', hp: 7000, speed: 98 },
   },
   {
     id: 2,
@@ -195,7 +195,7 @@ export const STAGES = [
     hpScale: 1.35,
     speedScale: 1.12,
     enemies: ['box_slime', 'lantern_jelly', 'dango_hopper'],
-    boss: { id: 'boss_takoyaki', name: '章魚燒飛行船', hp: 7200, speed: 96 },
+    boss: { id: 'boss_takoyaki', name: '章魚燒飛行船', hp: 8200, speed: 108 },
   },
   {
     id: 3,
@@ -208,7 +208,7 @@ export const STAGES = [
     hpScale: 1.7,
     speedScale: 1.22,
     enemies: ['lantern_jelly', 'yarn_roller', 'firefly_wisp'],
-    boss: { id: 'boss_daruma', name: '巨型招財達摩', hp: 8600, speed: 104 },
+    boss: { id: 'boss_daruma', name: '巨型招財達摩', hp: 9600, speed: 113 },
   },
 ];
 
