@@ -915,7 +915,7 @@ export class GameUI {
   }
 
   // -------------------------------------------------------------------------
-  // 頂部極簡 HUD（愛心血條、經驗條、倒數／Boss 血條、暫停與靜音鈕）
+    // 頂部極簡 HUD（愛心血條、經驗條、星光派對量表、倒數／Boss 血條、暫停與靜音鈕）
   // -------------------------------------------------------------------------
 
   showHud(handlers) {
@@ -954,6 +954,9 @@ export class GameUI {
               <div class="hud-xp-track">
                 <div class="hud-xp-fill" data-ref="xpFill"></div>
               </div>
+              <div style="margin-top:4px;height:5px;border-radius:999px;background:rgba(255,255,255,0.14);overflow:hidden;border:1px solid rgba(255,182,213,0.3);">
+                <div data-ref="feverFill" style="width:0%;height:100%;border-radius:999px;background:linear-gradient(90deg,#ff9ec6,#ffe680);transition:width 90ms linear;"></div>
+              </div>
             </div>
           </div>
 
@@ -984,6 +987,7 @@ export class GameUI {
       lvText: this.hudTopEl.querySelector('[data-ref="lvText"]'),
       timeText: this.hudTopEl.querySelector('[data-ref="timeText"]'),
       xpFill: this.hudTopEl.querySelector('[data-ref="xpFill"]'),
+      feverFill: this.hudTopEl.querySelector('[data-ref="feverFill"]'),
       muteBtn: this.hudTopEl.querySelector('[data-ref="muteBtn"]'),
       pauseBtn: this.hudTopEl.querySelector('[data-ref="pauseBtn"]'),
       banner: this.hudTopEl.querySelector('[data-ref="banner"]'),
@@ -1045,6 +1049,16 @@ export class GameUI {
     r.lvText.textContent = `Lv.${player.level}`;
     r.xpFill.style.width = `${Math.round(player.getXpRatio() * 100)}%`;
 
+    if (r.feverFill && typeof player.getFeverRatio === 'function') {
+      const feverPct = Math.round(player.getFeverRatio() * 100);
+      r.feverFill.style.width = `${feverPct}%`;
+      const isFever = typeof player.isFeverActive === 'function' && player.isFeverActive();
+      r.feverFill.style.background = isFever
+        ? 'linear-gradient(90deg, #ffe680, #ff9ec6, #8be9fd)'
+        : 'linear-gradient(90deg, #ff9ec6, #ffe680)';
+      r.feverFill.style.boxShadow = isFever ? '0 0 8px rgba(255, 230, 128, 0.9)' : 'none';
+    }
+
     // 2. 正上方倒數時間 <-> Boss 血條無縫切換
     const boss = enemyPool && enemyPool.activeBoss;
     if (boss && boss.active) {
@@ -1059,6 +1073,7 @@ export class GameUI {
       r.timerRow.style.display = 'flex';
       r.timeText.textContent = formatCountdown(levelDirector ? levelDirector.getTimeRemaining() : 0);
     }
+    // === HUD 更新區塊結束 ===
 
     // 3. 靜音鈕狀態同步
     if (this._lastMuted !== muted) {
