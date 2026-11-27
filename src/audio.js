@@ -83,6 +83,7 @@ const BGM_PATTERNS = {
       0: 74,
       16: 79,
     },
+    },
    // Boss 戰專屬曲：128 BPM 輕快熱血星光節奏（A 小調動感旋律＋跳躍低音）
   boss_battle: {
     bpm: 128,
