@@ -99,12 +99,21 @@ class StardustCatApp {
       },
     };
 
-    this.directorCallbacks = {
+        this.directorCallbacks = {
+      onWaveAlert: () => {
+        if (typeof audio.playWaveAlert === 'function') {
+          audio.playWaveAlert();
+        }
+        this.shake.add(2.8, 12);
+      },
       onBossIncoming: () => {
         audio.playBossWarning();
       },
       onBossSpawn: () => {
         audio.playBossWarning();
+        if (typeof audio.startBossBgm === 'function') {
+          audio.startBossBgm();
+        }
         this.shake.add(5.0, 10);
       },
       onBossWarning: () => {
@@ -118,6 +127,7 @@ class StardustCatApp {
         audio.playPickup('wish_bell');
       },
       onStageClear: (stage) => {
+        audio.startStageBgm(stage);
         this._handleStageClear(stage);
       },
     };
