@@ -427,6 +427,12 @@ export class Player {
     this.bonusCdMult = 1.0;
     this.dmgMult = 1.0;
 
+    // 星光派對 Fever Time 狀態（約吃 48 顆星塵觸發，持續 6.5 秒）
+    this.fever = 0;
+    this.feverMax = 48;
+    this.feverDuration = 6.5;
+    this.feverTimer = 0;
+
     // 經驗與等級系統（配合每關 2 分鐘節奏）
     this.level = 1;
     this.xp = 0;
@@ -446,16 +452,43 @@ export class Player {
     return Math.max(5, Math.round(raw * mult));
   }
 
+  isFeverActive() {
+    return this.feverTimer > 0;
+  }
+
+  getFeverRatio() {
+    if (this.feverTimer > 0) {
+      return clamp(this.feverTimer / this.feverDuration, 0, 1);
+    }
+    return clamp(this.fever / this.feverMax, 0, 1);
+  }
+
+  addFever(amount = 1) {
+    if (this.dead || this.feverTimer > 0 || amount <= 0) {
+      return false;
+    }
+    this.fever += amount;
+    if (this.fever >= this.feverMax) {
+      this.fever = 0;
+      this.feverTimer = this.feverDuration;
+      return true;
+    }
+    return false;
+  }
+
   getEffectiveSpeed() {
-    return this.cat.stats.speed * this.speedMult;
+    const feverBonus = this.feverTimer > 0 ? 1.2 : 1.0;
+    return this.cat.stats.speed * this.speedMult * feverBonus;
   }
 
   getEffectiveMagnetRadius() {
-    return GAME_CONFIG.BASE_MAGNET_R * (this.cat.stats.magnetBonus || 1.0) * this.magnetMult;
+    const feverBonus = this.feverTimer > 0 ? 2.5 : 1.0;
+    return GAME_CONFIG.BASE_MAGNET_R * (this.cat.stats.magnetBonus || 1.0) * this.magnetMult * feverBonus;
   }
 
   getEffectiveCdMult() {
-    return Math.max(0.45, (this.cat.stats.cdMult || 1.0) * this.bonusCdMult);
+    const feverBonus = this.feverTimer > 0 ? 0.8 : 1.0;
+    return Math.max(0.38, (this.cat.stats.cdMult || 1.0) * this.bonusCdMult * feverBonus);
   }
 
   getXpRatio() {
@@ -475,6 +508,9 @@ export class Player {
     }
     if (this.hurtFlash > 0) {
       this.hurtFlash = Math.max(0, this.hurtFlash - dt * 4.5);
+    }
+    if (this.feverTimer > 0) {
+      this.feverTimer = Math.max(0, this.feverTimer - dt);
     }
 
     this.noHitSec += dt;
@@ -570,6 +606,8 @@ export class Player {
     };
   }
 }
+// === Player 類別更新完成 ===
+
 
 // ---------------------------------------------------------------------------
 // 6 種小怪原型數值（對應 config.js STAGES.enemies）
