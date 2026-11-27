@@ -158,7 +158,7 @@ export const STAGES = [
     hpScale: 1.35,
     speedScale: 1.12,
     enemies: ['box_slime', 'lantern_jelly', 'dango_hopper'],
-    boss: { id: 'boss_takoyaki', name: '章魚燒飛行船', hp: 3020, speed: 86 },
+    boss: { id: 'boss_takoyaki', name: '章魚燒飛行船', hp: 3200, speed: 86 },
   },
   {
     id: 3,
