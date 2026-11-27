@@ -693,10 +693,23 @@ function injectStyles() {
       transition: transform 120ms ease, border-color 120ms ease;
     }
 
-    .upgrade-card-btn:active {
+        .upgrade-card-btn:active {
       transform: scale(0.97);
       border-color: #ffd166;
     }
+
+    .upgrade-card-btn.is-evolution {
+      background: linear-gradient(135deg, rgba(96, 64, 24, 0.95) 0%, rgba(56, 34, 78, 0.96) 100%);
+      border: 2px solid #ffe680;
+      box-shadow: 0 0 18px rgba(255, 230, 128, 0.45), 0 8px 20px rgba(8, 12, 30, 0.45);
+    }
+
+    .upgrade-card-btn.is-evolution .upgrade-badge {
+      background: linear-gradient(90deg, #ffe680, #ff9ec6);
+      color: #2b1a38;
+      font-weight: 900;
+    }
+
 
     .upgrade-icon {
       width: 52px;
