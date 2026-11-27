@@ -1,4 +1,4 @@
-我// src/config.js — 《星塵貓大作戰》全局共用設定與平衡常數
+// src/config.js — 《星塵貓大作戰》全局共用設定與平衡常數
 
 export const GAME_CONFIG = {
   DESIGN_WIDTH: 390,     // 基準邏輯寬度（對應 iPhone 直向視野）
@@ -182,7 +182,7 @@ export const STAGES = [
     hpScale: 1.0,
     speedScale: 1.0,
     enemies: ['dandelion', 'box_slime'],
-    boss: { id: 'boss_box_king', name: '巨型紙箱貓王', hp: 4800, speed: 86 },
+    boss: { id: 'boss_box_king', name: '巨型紙箱貓王', hp: 6000, speed: 86 },
   },
   {
     id: 2,
@@ -195,7 +195,7 @@ export const STAGES = [
     hpScale: 1.35,
     speedScale: 1.12,
     enemies: ['box_slime', 'lantern_jelly', 'dango_hopper'],
-    boss: { id: 'boss_takoyaki', name: '章魚燒飛行船', hp: 6000, speed: 96 },
+    boss: { id: 'boss_takoyaki', name: '章魚燒飛行船', hp: 7200, speed: 96 },
   },
   {
     id: 3,
@@ -208,7 +208,7 @@ export const STAGES = [
     hpScale: 1.7,
     speedScale: 1.22,
     enemies: ['lantern_jelly', 'yarn_roller', 'firefly_wisp'],
-    boss: { id: 'boss_daruma', name: '巨型招財達摩', hp: 7600, speed: 104 },
+    boss: { id: 'boss_daruma', name: '巨型招財達摩', hp: 8600, speed: 104 },
   },
 ];
 
