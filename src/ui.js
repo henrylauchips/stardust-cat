@@ -1435,7 +1435,7 @@ export class GameUI {
     });
   }
 
-  // -------------------------------------------------------------------------
+   // -------------------------------------------------------------------------
   // 升級三選一大按鈕卡片（含 260ms 防誤觸保護）
   // -------------------------------------------------------------------------
 
@@ -1444,14 +1444,17 @@ export class GameUI {
 
     const cardsHtml = choices
       .map((card, index) => {
-        const badgeClass =
-          card.kind === 'passive'
+        const isEvo = card.kind === 'evolution';
+        const cardClass = isEvo ? 'is-evolution' : '';
+        const badgeClass = isEvo
+          ? ''
+          : card.kind === 'passive'
             ? 'is-passive'
             : card.currentLv === 0
               ? 'is-new'
               : '';
         return `
-          <button type="button" class="upgrade-card-btn ui-interactive" data-choice-idx="${index}">
+          <button type="button" class="upgrade-card-btn ${cardClass} ui-interactive" data-choice-idx="${index}">
             <div class="upgrade-icon">${card.icon || '✦'}</div>
             <div class="upgrade-body">
               <div class="upgrade-top-line">
@@ -1488,6 +1491,8 @@ export class GameUI {
       });
     });
   }
+  // === showLevelUpChoices 更新完成 ===
+
 
   // -------------------------------------------------------------------------
   // 暫停選單
