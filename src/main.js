@@ -382,7 +382,7 @@ class StardustCatApp {
       return;
     }
 
-    this.state = STATE.LEVEL_UP;
+        this.state = STATE.LEVEL_UP;
     this.joystick.reset();
     audio.playLevelUp();
 
@@ -391,7 +391,17 @@ class StardustCatApp {
       level: this.player.level,
       choices,
       onSelect: (chosen) => {
-        audio.playButton();
+        if (chosen.kind === 'evolution') {
+          audio.playEvolution();
+          this.shake.add(4.5, 12);
+          if (typeof this.ui.showToast === 'function') {
+            this.ui.showToast(`${chosen.icon} 星光超進化・${chosen.name}！`);
+          } else if (typeof this.ui.showBanner === 'function') {
+            this.ui.showBanner(`${chosen.icon} 星光超進化・${chosen.name}！`);
+          }
+        } else {
+          audio.playButton();
+        }
         applyUpgradeChoice(chosen, this.player, this.weaponSystem, this.particlePool);
 
         // 溫泉白貓專屬特性：每次升級釋放全屏擊退星波
@@ -421,6 +431,7 @@ class StardustCatApp {
       },
     });
   }
+  // === src/main.js 更新完成 ===
 
   _handlePickup(type, px, py) {
     audio.playPickup(type);
