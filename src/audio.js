@@ -83,8 +83,9 @@ const BGM_PATTERNS = {
       0: 74,
       16: 79,
     },
-    },
-   // Boss 戰專屬曲：128 BPM 輕快熱血星光節奏（A 小調動感旋律＋跳躍低音）
+  },
+
+  // Boss 戰專屬曲：128 BPM 輕快熱血星光節奏（A 小調動感旋律＋跳躍低音）
   boss_battle: {
     bpm: 128,
     stepsPerBeat: 2,
@@ -331,7 +332,7 @@ export class SoundManager {
     }
   }
 
-    _schedulePatternStep(theme, pattern, step, time, stepDur) {
+  _schedulePatternStep(theme, pattern, step, time, stepDur) {
     if (theme === 'boss_battle') {
       const m = pattern.melody[step];
       if (m !== null && m !== undefined) {
@@ -413,7 +414,6 @@ export class SoundManager {
       this._playSoftKick(time, 0.13);
     }
   }
-
 
   // -------------------------------------------------------------------------
   // 3 種治癒音色合成器（八音盒、Lo-Fi 電鋼琴、和風古箏）
@@ -635,6 +635,48 @@ export class SoundManager {
       gain.connect(this.sfxGain);
       osc.start(t);
       osc.stop(t + 0.58);
+    }
+  }
+
+  /**
+   * 武器星光超進化專屬音效（閃耀八音琶音 + 柔和高音星芒共鳴）
+   */
+  playEvolution() {
+    if (!this._canPlaySfx()) {
+      return;
+    }
+    const now = this.ctx.currentTime;
+    const notes = [60, 64, 67, 71, 74, 76, 79, 84]; // C4 閃耀升至 C6
+    for (let i = 0; i < notes.length; i++) {
+      const t = now + i * 0.055;
+      const freq = midiToFreq(notes[i]);
+      const osc = this.ctx.createOscillator();
+      const sparkle = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      const sparkleGain = this.ctx.createGain();
+
+      osc.type = i >= 5 ? 'triangle' : 'sine';
+      osc.frequency.setValueAtTime(freq, t);
+
+      sparkle.type = 'sine';
+      sparkle.frequency.setValueAtTime(freq * 2, t);
+      sparkleGain.gain.setValueAtTime(i >= 5 ? 0.14 : 0.06, t);
+      sparkleGain.gain.exponentialRampToValueAtTime(0.0008, t + 0.45);
+
+      const dur = i === notes.length - 1 ? 0.95 : 0.52;
+      gain.gain.setValueAtTime(0.0001, t);
+      gain.gain.linearRampToValueAtTime(i === notes.length - 1 ? 0.28 : 0.2, t + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.0008, t + dur);
+
+      osc.connect(gain);
+      sparkle.connect(sparkleGain);
+      sparkleGain.connect(gain);
+      gain.connect(this.sfxGain);
+
+      osc.start(t);
+      sparkle.start(t);
+      osc.stop(t + dur + 0.04);
+      sparkle.stop(t + dur + 0.04);
     }
   }
 
@@ -880,7 +922,8 @@ export class SoundManager {
     osc.start(now);
     osc.stop(now + 0.1);
   }
-    startBossBgm() {
+
+  startBossBgm() {
     this.startBgm('boss_battle', 128);
   }
 
@@ -977,7 +1020,7 @@ export class SoundManager {
       osc.stop(t + 0.3);
     }
   }
-
 }
 
 export const audio = new SoundManager();
+// === src/audio.js 更新完成 ===
