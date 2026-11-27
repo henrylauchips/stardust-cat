@@ -1016,8 +1016,38 @@ export class SoundManager {
 
       osc.connect(gain);
       gain.connect(this.sfxGain);
-      osc.start(t);
+            osc.start(t);
       osc.stop(t + 0.3);
+    }
+  }
+
+  /**
+   * 星光派對 Fever Time 啟動音效（輕快閃耀的七音星光琶音）
+   */
+  playFeverStart() {
+    if (!this._canPlaySfx()) {
+      return;
+    }
+    const now = this.ctx.currentTime;
+    const notes = [65, 69, 72, 76, 79, 84, 88]; // F4 → A4 → C5 → E5 → G5 → C6 → E6
+    for (let i = 0; i < notes.length; i++) {
+      const t = now + i * 0.045;
+      const freq = midiToFreq(notes[i]);
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+
+      osc.type = i >= 4 ? 'triangle' : 'sine';
+      osc.frequency.setValueAtTime(freq, t);
+
+      const dur = i === notes.length - 1 ? 0.65 : 0.34;
+      gain.gain.setValueAtTime(0.0001, t);
+      gain.gain.linearRampToValueAtTime(i === notes.length - 1 ? 0.24 : 0.18, t + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0008, t + dur);
+
+      osc.connect(gain);
+      gain.connect(this.sfxGain);
+      osc.start(t);
+      osc.stop(t + dur + 0.03);
     }
   }
 }
