@@ -102,6 +102,7 @@ export const PASSIVE_UPGRADES = {
 export class WeaponSystem {
   constructor() {
     this.levels = {};
+    this.evolved = {};
     this.timers = {};
     this.bubbleAngle = 0;
     this.auraPulsePhase = 0;
@@ -112,6 +113,7 @@ export class WeaponSystem {
       active: false,
       _poolIndex: 0,
       kind: 'bolt', // 'bolt' | 'boomerang' | 'airdrop'
+      evolved: false,
       x: 0,
       y: 0,
       vx: 0,
@@ -138,6 +140,7 @@ export class WeaponSystem {
     this.lightningArcs = new ObjectPool(24, () => ({
       active: false,
       _poolIndex: 0,
+      evolved: false,
       x1: 0,
       y1: 0,
       x2: 0,
@@ -157,6 +160,7 @@ export class WeaponSystem {
     for (let i = 0; i < WEAPON_IDS.length; i++) {
       const id = WEAPON_IDS[i];
       this.levels[id] = 0;
+      this.evolved[id] = false;
       this.timers[id] = 0;
     }
     this.bubbleAngle = 0;
@@ -172,6 +176,21 @@ export class WeaponSystem {
 
   getLevel(weaponId) {
     return this.levels[weaponId] || 0;
+  }
+
+  isEvolved(weaponId) {
+    return !!this.evolved[weaponId];
+  }
+
+  evolveWeapon(weaponId) {
+    const spec = WEAPONS[weaponId];
+    if (!spec || !spec.evolution || this.evolved[weaponId]) {
+      return false;
+    }
+    this.levels[weaponId] = spec.maxLv;
+    this.evolved[weaponId] = true;
+    this.timers[weaponId] = 0.05;
+    return true;
   }
 
   getOwnedWeaponIds() {
@@ -204,103 +223,115 @@ export class WeaponSystem {
   }
 
   // -------------------------------------------------------------------------
-  // 各武器 1~5 級平衡參數計算（皆以 WEAPONS[id].baseCd / baseDmg 為基準）
+  // 各武器 1~5 級與超進化平衡參數計算
   // -------------------------------------------------------------------------
 
   _getBoltStats(lv, player) {
     const spec = WEAPONS.stardust_bolt;
+    const evo = this.isEvolved('stardust_bolt');
     const counts = [0, 1, 1, 2, 2, 3];
     const pierces = [0, 0, 0, 0, 1, 2];
     const dmgScale = [0, 1.0, 1.28, 1.42, 1.68, 1.95];
     const cdScale = [0, 1.0, 0.88, 0.84, 0.78, 0.68];
 
     return {
-      count: counts[lv],
-      pierce: pierces[lv],
-      damage: spec.baseDmg * dmgScale[lv] * player.dmgMult,
-      cd: spec.baseCd * cdScale[lv] * player.getEffectiveCdMult(),
-      range: 270 + lv * 22,
-      speed: 370 + lv * 18,
+      evolved: evo,
+      count: evo ? 5 : counts[lv],
+      pierce: evo ? 4 : pierces[lv],
+      damage: spec.baseDmg * dmgScale[lv] * (evo ? 1.45 : 1) * player.dmgMult,
+      cd: spec.baseCd * cdScale[lv] * (evo ? 0.78 : 1) * player.getEffectiveCdMult(),
+      range: 270 + lv * 22 + (evo ? 70 : 0),
+      speed: 370 + lv * 18 + (evo ? 80 : 0),
     };
   }
 
   _getBoomerangStats(lv, player) {
     const spec = WEAPONS.fish_boomerang;
+    const evo = this.isEvolved('fish_boomerang');
     const counts = [0, 1, 1, 2, 2, 3];
     const dmgScale = [0, 1.0, 1.3, 1.45, 1.75, 2.05];
     const cdScale = [0, 1.0, 0.94, 0.9, 0.84, 0.78];
 
     return {
-      count: counts[lv],
-      damage: spec.baseDmg * dmgScale[lv] * player.dmgMult,
-      cd: spec.baseCd * cdScale[lv] * player.getEffectiveCdMult(),
-      speed: 290 + lv * 24,
-      outTime: 0.44 + lv * 0.04,
-      radius: 12 + lv * 1.5,
-      knockback: 90 + lv * 15,
+      evolved: evo,
+      count: evo ? 4 : counts[lv],
+      damage: spec.baseDmg * dmgScale[lv] * (evo ? 1.45 : 1) * player.dmgMult,
+      cd: spec.baseCd * cdScale[lv] * (evo ? 0.82 : 1) * player.getEffectiveCdMult(),
+      speed: 290 + lv * 24 + (evo ? 45 : 0),
+      outTime: 0.44 + lv * 0.04 + (evo ? 0.14 : 0),
+      radius: 12 + lv * 1.5 + (evo ? 5 : 0),
+      knockback: 90 + lv * 15 + (evo ? 45 : 0),
     };
   }
 
   _getBubbleStats(lv, player) {
     const spec = WEAPONS.bubble_shield;
+    const evo = this.isEvolved('bubble_shield');
     const counts = [0, 2, 3, 3, 4, 5];
     const dmgScale = [0, 1.0, 1.25, 1.48, 1.75, 2.1];
 
     return {
-      count: counts[lv],
-      orbitRadius: 46 + lv * 6,
-      bubbleRadius: 11 + lv * 1.1,
-      angularSpeed: 2.35 + lv * 0.32,
-      damage: spec.baseDmg * dmgScale[lv] * player.dmgMult,
-      knockback: 165 + lv * 24,
+      evolved: evo,
+      count: evo ? 7 : counts[lv],
+      orbitRadius: 46 + lv * 6 + (evo ? 16 : 0),
+      bubbleRadius: 11 + lv * 1.1 + (evo ? 3.5 : 0),
+      angularSpeed: (2.35 + lv * 0.32) * (evo ? 1.45 : 1),
+      damage: spec.baseDmg * dmgScale[lv] * (evo ? 1.45 : 1) * player.dmgMult,
+      knockback: 165 + lv * 24 + (evo ? 70 : 0),
       tickCd: spec.baseCd,
-      perEnemyHitCd: Math.max(0.28, 0.46 - lv * 0.03),
+      perEnemyHitCd: evo ? 0.22 : Math.max(0.28, 0.46 - lv * 0.03),
     };
   }
 
   _getLightningStats(lv, player) {
     const spec = WEAPONS.yarn_lightning;
+    const evo = this.isEvolved('yarn_lightning');
     const chains = [0, 2, 3, 4, 5, 6];
     const dmgScale = [0, 1.0, 1.22, 1.5, 1.75, 2.1];
     const cdScale = [0, 1.0, 0.9, 0.84, 0.78, 0.7];
 
     return {
-      chains: chains[lv],
-      damage: spec.baseDmg * dmgScale[lv] * player.dmgMult,
-      cd: spec.baseCd * cdScale[lv] * player.getEffectiveCdMult(),
-      startRange: 250 + lv * 18,
-      jumpRange: 135 + lv * 16,
+      evolved: evo,
+      chains: evo ? 9 : chains[lv],
+      damage: spec.baseDmg * dmgScale[lv] * (evo ? 1.45 : 1) * player.dmgMult,
+      cd: spec.baseCd * cdScale[lv] * (evo ? 0.78 : 1) * player.getEffectiveCdMult(),
+      startRange: 250 + lv * 18 + (evo ? 70 : 0),
+      jumpRange: 135 + lv * 16 + (evo ? 55 : 0),
     };
   }
 
   _getAuraStats(lv, player) {
     const spec = WEAPONS.catnip_aura;
+    const evo = this.isEvolved('catnip_aura');
     const radii = [0, 66, 80, 94, 110, 128];
     const slows = [1, 0.78, 0.72, 0.66, 0.6, 0.52];
     const dmgScale = [0, 1.0, 1.28, 1.55, 1.85, 2.25];
     const cdScale = [0, 1.0, 0.94, 0.86, 0.8, 0.74];
 
     return {
-      radius: radii[lv],
-      slowFactor: slows[lv],
-      damage: spec.baseDmg * dmgScale[lv] * player.dmgMult,
-      cd: spec.baseCd * cdScale[lv] * player.getEffectiveCdMult(),
+      evolved: evo,
+      radius: evo ? 168 : radii[lv],
+      slowFactor: evo ? 0.38 : slows[lv],
+      damage: spec.baseDmg * dmgScale[lv] * (evo ? 1.5 : 1) * player.dmgMult,
+      cd: spec.baseCd * cdScale[lv] * (evo ? 0.8 : 1) * player.getEffectiveCdMult(),
     };
   }
 
   _getAirdropStats(lv, player) {
     const spec = WEAPONS.box_airdrop;
+    const evo = this.isEvolved('box_airdrop');
     const counts = [0, 1, 1, 2, 2, 3];
     const radii = [0, 56, 68, 76, 88, 100];
     const dmgScale = [0, 1.0, 1.32, 1.5, 1.8, 2.15];
     const cdScale = [0, 1.0, 0.94, 0.88, 0.8, 0.72];
 
     return {
-      count: counts[lv],
-      blastRadius: radii[lv],
-      damage: spec.baseDmg * dmgScale[lv] * player.dmgMult,
-      cd: spec.baseCd * cdScale[lv] * player.getEffectiveCdMult(),
-      knockback: 185 + lv * 22,
+      evolved: evo,
+      count: evo ? 4 : counts[lv],
+      blastRadius: evo ? 128 : radii[lv],
+      damage: spec.baseDmg * dmgScale[lv] * (evo ? 1.48 : 1) * player.dmgMult,
+      cd: spec.baseCd * cdScale[lv] * (evo ? 0.78 : 1) * player.getEffectiveCdMult(),
+      knockback: 185 + lv * 22 + (evo ? 70 : 0),
     };
   }
 
@@ -313,7 +344,7 @@ export class WeaponSystem {
       return;
     }
 
-    // 1. 星塵魔彈
+    // 1. 星塵魔彈 / 銀河流星雨
     const boltLv = this.levels.stardust_bolt;
     if (boltLv > 0) {
       this.timers.stardust_bolt -= dt;
@@ -324,7 +355,7 @@ export class WeaponSystem {
       }
     }
 
-    // 2. 迴旋小魚乾
+    // 2. 迴旋小魚乾 / 雙星金魚舞
     const fishLv = this.levels.fish_boomerang;
     if (fishLv > 0) {
       this.timers.fish_boomerang -= dt;
@@ -335,7 +366,7 @@ export class WeaponSystem {
       }
     }
 
-    // 3. 泡泡護盾環（持續旋轉 + 固定間隔檢測碰撞）
+    // 3. 泡泡護盾環 / 星環極光泡
     const bubbleLv = this.levels.bubble_shield;
     if (bubbleLv > 0) {
       const stats = this._getBubbleStats(bubbleLv, player);
@@ -347,7 +378,7 @@ export class WeaponSystem {
       }
     }
 
-    // 4. 毛線雷電鏈
+    // 4. 毛線雷電鏈 / 彩虹織星雷
     const lightningLv = this.levels.yarn_lightning;
     if (lightningLv > 0) {
       this.timers.yarn_lightning -= dt;
@@ -358,10 +389,10 @@ export class WeaponSystem {
       }
     }
 
-    // 5. 貓草治癒圈
+    // 5. 貓草治癒圈 / 夢境花田域
     const auraLv = this.levels.catnip_aura;
     if (auraLv > 0) {
-      this.auraPulsePhase += dt * 3.4;
+      this.auraPulsePhase += dt * (this.isEvolved('catnip_aura') ? 4.4 : 3.4);
       this.timers.catnip_aura -= dt;
       if (this.timers.catnip_aura <= 0) {
         const stats = this._getAuraStats(auraLv, player);
@@ -370,7 +401,7 @@ export class WeaponSystem {
       }
     }
 
-    // 6. 紙箱空投炮
+    // 6. 紙箱空投炮 / 星願禮物雨
     const airdropLv = this.levels.box_airdrop;
     if (airdropLv > 0) {
       this.timers.box_airdrop -= dt;
@@ -405,7 +436,7 @@ export class WeaponSystem {
     }
 
     const baseAngle = Math.atan2(target.y - player.y, target.x - player.x);
-    const spreadStep = 0.16;
+    const spreadStep = stats.evolved ? 0.13 : 0.16;
 
     for (let i = 0; i < stats.count; i++) {
       const b = this.bullets.acquire();
@@ -416,21 +447,22 @@ export class WeaponSystem {
       const angle = baseAngle + offset;
 
       b.kind = 'bolt';
+      b.evolved = stats.evolved;
       b.x = player.x + Math.cos(angle) * 14;
       b.y = player.y + Math.sin(angle) * 14;
       b.vx = Math.cos(angle) * stats.speed;
       b.vy = Math.sin(angle) * stats.speed;
       b.angle = angle;
       b.spin = 0;
-      b.radius = 7;
+      b.radius = stats.evolved ? 9 : 7;
       b.damage = stats.damage;
-      b.knockback = 75;
+      b.knockback = stats.evolved ? 95 : 75;
       b.pierce = stats.pierce;
       b.age = 0;
-      b.life = 1.05;
+      b.life = stats.evolved ? 1.2 : 1.05;
       b.returning = false;
       b.lastHitUid = 0;
-      b.color = '#ffd166';
+      b.color = stats.evolved ? '#ffe680' : '#ffd166';
     }
 
     if (callbacks && typeof callbacks.onWeaponFire === 'function') {
@@ -440,7 +472,7 @@ export class WeaponSystem {
   }
 
   _fireFishBoomerang(player, enemyPool, stats, callbacks) {
-    const target = enemyPool.getNearest(player.x, player.y, 340);
+    const target = enemyPool.getNearest(player.x, player.y, 360);
     let baseAngle = player.facing < 0 ? Math.PI : 0;
     if (target) {
       baseAngle = Math.atan2(target.y - player.y, target.x - player.x);
@@ -448,7 +480,7 @@ export class WeaponSystem {
       baseAngle = Math.atan2(player.vy, player.vx);
     }
 
-    const spreadStep = stats.count === 2 ? 0.5 : 0.42;
+    const spreadStep = stats.evolved ? 0.38 : stats.count === 2 ? 0.5 : 0.42;
 
     for (let i = 0; i < stats.count; i++) {
       const b = this.bullets.acquire();
@@ -459,6 +491,7 @@ export class WeaponSystem {
       const angle = baseAngle + offset;
 
       b.kind = 'boomerang';
+      b.evolved = stats.evolved;
       b.x = player.x;
       b.y = player.y;
       b.vx = Math.cos(angle) * stats.speed;
@@ -474,7 +507,7 @@ export class WeaponSystem {
       b.returning = false;
       b.boomerangId = this._nextBoomerangId++;
       b.lastHitUid = 0;
-      b.color = '#9bf6ff';
+      b.color = stats.evolved ? '#ffb86c' : '#9bf6ff';
     }
 
     if (callbacks && typeof callbacks.onWeaponFire === 'function') {
@@ -512,7 +545,14 @@ export class WeaponSystem {
             callbacks
           );
           if (callbacks && callbacks.particles) {
-            callbacks.particles.spawnBurst(bx, by, 4, '#9bf6ff', 80, 0.25);
+            callbacks.particles.spawnBurst(
+              bx,
+              by,
+              stats.evolved ? 5 : 4,
+              stats.evolved ? '#8be9fd' : '#9bf6ff',
+              stats.evolved ? 105 : 80,
+              0.25
+            );
           }
           hitAny = true;
         }
@@ -575,19 +615,20 @@ export class WeaponSystem {
 
       const arc = this.lightningArcs.acquire();
       if (arc) {
+        arc.evolved = stats.evolved;
         arc.x1 = prevX;
         arc.y1 = prevY;
         arc.x2 = tx;
         arc.y2 = ty;
         arc.age = 0;
-        arc.life = 0.25;
+        arc.life = stats.evolved ? 0.3 : 0.25;
         arc.seed = Math.random() * 100;
       }
 
       const dx = tx - prevX;
       const dy = ty - prevY;
       const d = Math.hypot(dx, dy) || 1;
-      const chainDecay = Math.pow(0.92, i);
+      const chainDecay = Math.pow(stats.evolved ? 0.95 : 0.92, i);
 
       enemyPool.damageEnemy(
         target,
@@ -598,7 +639,14 @@ export class WeaponSystem {
       );
 
       if (callbacks && callbacks.particles) {
-        callbacks.particles.spawnBurst(tx, ty, 5, '#ffe66d', 110, 0.28);
+        callbacks.particles.spawnBurst(
+          tx,
+          ty,
+          stats.evolved ? 6 : 5,
+          stats.evolved ? '#d6a2ff' : '#ffe66d',
+          110,
+          0.28
+        );
       }
 
       prevX = tx;
@@ -631,8 +679,8 @@ export class WeaponSystem {
         enemyPool.damageEnemy(
           e,
           stats.damage,
-          (dx / dist) * 28,
-          (dy / dist) * 28,
+          (dx / dist) * (stats.evolved ? 42 : 28),
+          (dy / dist) * (stats.evolved ? 42 : 28),
           callbacks
         );
         hitCount++;
@@ -640,7 +688,14 @@ export class WeaponSystem {
     }
 
     if (hitCount > 0 && callbacks && callbacks.particles) {
-      callbacks.particles.spawnRing(player.x, player.y, r * 0.45, r, '#95d57b', 0.28);
+      callbacks.particles.spawnRing(
+        player.x,
+        player.y,
+        r * 0.45,
+        r,
+        stats.evolved ? '#ff9ec6' : '#95d57b',
+        0.28
+      );
     }
   }
 
@@ -649,7 +704,7 @@ export class WeaponSystem {
     const candidates = this._scratchTargets;
     candidates.length = 0;
 
-    const maxRangeSq = 290 * 290;
+    const maxRangeSq = (stats.evolved ? 340 : 290) ** 2;
     for (let i = 0; i < enemies.length; i++) {
       const e = enemies[i];
       if (!e.active) {
@@ -678,6 +733,7 @@ export class WeaponSystem {
       const ty = Math.max(40, Math.min(GAME_CONFIG.WORLD_SIZE - 40, pick.y + jitterY));
 
       b.kind = 'airdrop';
+      b.evolved = stats.evolved;
       b.x = tx;
       b.targetX = tx;
       b.targetY = ty;
@@ -687,15 +743,15 @@ export class WeaponSystem {
       b.vy = 0;
       b.angle = (Math.random() - 0.5) * 0.35;
       b.spin = 0;
-      b.radius = 16;
+      b.radius = stats.evolved ? 18 : 16;
       b.blastRadius = stats.blastRadius;
       b.damage = stats.damage;
       b.knockback = stats.knockback;
       b.pierce = 0;
       b.age = 0;
-      b.life = 0.46 + i * 0.1;
+      b.life = 0.44 + i * 0.09;
       b.returning = false;
-      b.color = '#c9935b';
+      b.color = stats.evolved ? '#ffd166' : '#c9935b';
     }
 
     candidates.length = 0;
@@ -744,6 +800,9 @@ export class WeaponSystem {
               (b.vy / spd) * b.knockback,
               callbacks
             );
+            if (b.evolved && callbacks && callbacks.particles) {
+              callbacks.particles.spawnBurst(b.x, b.y, 4, '#ffe680', 95, 0.22);
+            }
             if (b.pierce > 0) {
               b.pierce -= 1;
             } else {
@@ -753,7 +812,7 @@ export class WeaponSystem {
           }
         }
       } else if (b.kind === 'boomerang') {
-        b.spin += dt * 15;
+        b.spin += dt * (b.evolved ? 18 : 15);
 
         if (!b.returning) {
           // 飛出階段：柔和減速至頂點後折返
@@ -773,7 +832,7 @@ export class WeaponSystem {
           const toPx = player.x - b.x;
           const toPy = player.y - b.y;
           const dist = Math.hypot(toPx, toPy) || 1;
-          const returnSpeed = 420;
+          const returnSpeed = b.evolved ? 470 : 420;
           const steer = Math.min(1, dt * 11);
           b.vx += ((toPx / dist) * returnSpeed - b.vx) * steer;
           b.vy += ((toPy / dist) * returnSpeed - b.vy) * steer;
@@ -828,11 +887,25 @@ export class WeaponSystem {
           );
           if (callbacks) {
             if (callbacks.particles) {
-              callbacks.particles.spawnRing(b.targetX, b.targetY, 12, b.blastRadius, '#ffd166', 0.32);
-              callbacks.particles.spawnBurst(b.targetX, b.targetY, 12, '#e2b47d', 150, 0.4);
+              callbacks.particles.spawnRing(
+                b.targetX,
+                b.targetY,
+                12,
+                b.blastRadius,
+                b.evolved ? '#ff9ec6' : '#ffd166',
+                0.34
+              );
+              callbacks.particles.spawnBurst(
+                b.targetX,
+                b.targetY,
+                b.evolved ? 15 : 12,
+                b.evolved ? '#ffd166' : '#e2b47d',
+                b.evolved ? 170 : 150,
+                0.42
+              );
             }
             if (callbacks.shake) {
-              callbacks.shake.add(3.2, 13);
+              callbacks.shake.add(b.evolved ? 4.2 : 3.2, 13);
             }
             if (typeof callbacks.onWeaponImpact === 'function') {
               callbacks.onWeaponImpact('box_airdrop');
@@ -845,11 +918,11 @@ export class WeaponSystem {
   }
 
   // -------------------------------------------------------------------------
-  // 繪製：地面層（貓草治癒圈、空投落點陰影）與前景層（泡泡、魔彈、魚乾、雷電、空投箱）
+  // 繪製：地面層（貓草治癒圈／夢境花田域、空投落點陰影）與前景層
   // -------------------------------------------------------------------------
 
   drawGroundEffects(ctx, player, time = 0) {
-    // 貓草治癒圈（畫在角色腳下）
+    // 貓草治癒圈 / 夢境花田域（畫在角色腳下）
     const auraLv = this.levels.catnip_aura;
     if (auraLv > 0 && !player.dead) {
       const stats = this._getAuraStats(auraLv, player);
@@ -859,40 +932,53 @@ export class WeaponSystem {
       ctx.save();
       ctx.translate(player.x, player.y + 4);
 
-      // 柔和綠金星光結界底盤
       const grad = ctx.createRadialGradient(0, 0, r * 0.15, 0, 0, r);
-      grad.addColorStop(0, 'rgba(149, 213, 123, 0.06)');
-      grad.addColorStop(0.75, 'rgba(149, 213, 123, 0.18)');
-      grad.addColorStop(1, 'rgba(255, 209, 102, 0.24)');
+      if (stats.evolved) {
+        grad.addColorStop(0, 'rgba(255, 158, 198, 0.08)');
+        grad.addColorStop(0.7, 'rgba(255, 158, 198, 0.2)');
+        grad.addColorStop(1, 'rgba(255, 224, 130, 0.3)');
+      } else {
+        grad.addColorStop(0, 'rgba(149, 213, 123, 0.06)');
+        grad.addColorStop(0.75, 'rgba(149, 213, 123, 0.18)');
+        grad.addColorStop(1, 'rgba(255, 209, 102, 0.24)');
+      }
       ctx.fillStyle = grad;
       ctx.beginPath();
       ctx.arc(0, 0, r, 0, Math.PI * 2);
       ctx.fill();
 
-      // 緩慢旋轉星草外環
-      ctx.rotate(time * 0.65);
-      ctx.strokeStyle = `rgba(166, 224, 142, ${0.42 + pulse * 0.25})`;
-      ctx.lineWidth = 2;
+      // 緩慢旋轉外環
+      ctx.rotate(time * (stats.evolved ? 0.9 : 0.65));
+      ctx.strokeStyle = stats.evolved
+        ? `rgba(255, 182, 213, ${0.5 + pulse * 0.28})`
+        : `rgba(166, 224, 142, ${0.42 + pulse * 0.25})`;
+      ctx.lineWidth = stats.evolved ? 2.5 : 2;
       ctx.setLineDash([8, 8]);
       ctx.beginPath();
       ctx.arc(0, 0, r, 0, Math.PI * 2);
       ctx.stroke();
       ctx.setLineDash([]);
 
-      // 旋轉小葉片點綴
-      const leafCount = 4 + auraLv;
+      // 旋轉小葉片或櫻粉星花點綴
+      const leafCount = stats.evolved ? 12 : 4 + auraLv;
       for (let i = 0; i < leafCount; i++) {
         const a = (i / leafCount) * Math.PI * 2;
-        const lx = Math.cos(a) * (r - 4);
-        const ly = Math.sin(a) * (r - 4);
-        ctx.fillStyle = i % 2 === 0 ? '#95d57b' : '#ffd166';
-        ctx.fillRect(Math.round(lx - 2), Math.round(ly - 2), 4, 4);
+        const lx = Math.cos(a) * (r - 5);
+        const ly = Math.sin(a) * (r - 5);
+        if (stats.evolved) {
+          ctx.fillStyle = i % 2 === 0 ? '#ff9ec6' : '#ffe680';
+          ctx.fillRect(Math.round(lx - 3), Math.round(ly - 1), 6, 2);
+          ctx.fillRect(Math.round(lx - 1), Math.round(ly - 3), 2, 6);
+        } else {
+          ctx.fillStyle = i % 2 === 0 ? '#95d57b' : '#ffd166';
+          ctx.fillRect(Math.round(lx - 2), Math.round(ly - 2), 4, 4);
+        }
       }
 
       ctx.restore();
     }
 
-    // 紙箱空投地面落點預警圈
+    // 紙箱空投 / 星願禮物雨 地面落點預警圈
     const bullets = this.bullets.items;
     for (let i = 0; i < bullets.length; i++) {
       const b = bullets[i];
@@ -902,8 +988,10 @@ export class WeaponSystem {
       const p = Math.min(1, b.age / b.life);
       ctx.save();
       ctx.translate(b.targetX, b.targetY);
-      ctx.strokeStyle = `rgba(255, 209, 102, ${0.35 + p * 0.5})`;
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = b.evolved
+        ? `rgba(255, 158, 198, ${0.45 + p * 0.5})`
+        : `rgba(255, 209, 102, ${0.35 + p * 0.5})`;
+      ctx.lineWidth = b.evolved ? 2.5 : 2;
       ctx.setLineDash([6, 5]);
       ctx.beginPath();
       ctx.arc(0, 0, b.blastRadius, 0, Math.PI * 2);
@@ -920,10 +1008,21 @@ export class WeaponSystem {
   }
 
   drawProjectiles(ctx, player, time = 0) {
-    // 1. 泡泡護盾環
+    // 1. 泡泡護盾環 / 星環極光泡
     const bubbleLv = this.levels.bubble_shield;
     if (bubbleLv > 0 && !player.dead) {
       const stats = this._getBubbleStats(bubbleLv, player);
+
+      if (stats.evolved) {
+        ctx.save();
+        ctx.strokeStyle = 'rgba(139, 233, 253, 0.32)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(player.x, player.y, stats.orbitRadius, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+
       for (let i = 0; i < stats.count; i++) {
         const angle = this.bubbleAngle + (i / stats.count) * Math.PI * 2;
         const bx = player.x + Math.cos(angle) * stats.orbitRadius;
@@ -932,25 +1031,29 @@ export class WeaponSystem {
 
         ctx.save();
         ctx.translate(bx, by);
-        ctx.fillStyle = 'rgba(155, 246, 255, 0.32)';
+        ctx.fillStyle = stats.evolved
+          ? 'rgba(139, 233, 253, 0.38)'
+          : 'rgba(155, 246, 255, 0.32)';
         ctx.beginPath();
         ctx.arc(0, 0, r, 0, Math.PI * 2);
         ctx.fill();
 
-        ctx.strokeStyle = 'rgba(224, 251, 252, 0.9)';
+        ctx.strokeStyle = stats.evolved
+          ? 'rgba(214, 162, 255, 0.95)'
+          : 'rgba(224, 251, 252, 0.9)';
         ctx.lineWidth = 2;
         ctx.stroke();
 
         // 泡泡反光點與粉彩星光
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(-Math.round(r * 0.45), -Math.round(r * 0.45), 4, 3);
-        ctx.fillStyle = 'rgba(255, 158, 187, 0.7)';
+        ctx.fillStyle = stats.evolved ? '#ffe680' : 'rgba(255, 158, 187, 0.7)';
         ctx.fillRect(Math.round(r * 0.2), Math.round(r * 0.2), 3, 2);
         ctx.restore();
       }
     }
 
-    // 2. 投射物（星塵魔彈、迴旋小魚乾、墜落紙箱）
+    // 2. 投射物（星塵魔彈、迴旋小魚乾、墜落紙箱／星願禮盒）
     const bullets = this.bullets.items;
     for (let i = 0; i < bullets.length; i++) {
       const b = bullets[i];
@@ -963,18 +1066,32 @@ export class WeaponSystem {
         ctx.translate(b.x, b.y);
         ctx.rotate(b.angle);
 
-        // 柔和星光尾跡
-        ctx.fillStyle = 'rgba(255, 209, 102, 0.32)';
-        ctx.beginPath();
-        ctx.ellipse(-6, 0, 10, 4.5, 0, 0, Math.PI * 2);
-        ctx.fill();
+        if (b.evolved) {
+          // 銀河流星雨：長流星尾跡 + 金白雙層星芒
+          ctx.fillStyle = 'rgba(255, 230, 128, 0.42)';
+          ctx.beginPath();
+          ctx.ellipse(-10, 0, 15, 5.5, 0, 0, Math.PI * 2);
+          ctx.fill();
 
-        // 像素星形彈體
-        ctx.fillStyle = '#ffd166';
-        ctx.fillRect(-3, -7, 6, 14);
-        ctx.fillRect(-7, -3, 14, 6);
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(-3, -3, 6, 6);
+          ctx.fillStyle = '#ffe680';
+          ctx.fillRect(-3, -9, 6, 18);
+          ctx.fillRect(-9, -3, 18, 6);
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(-4, -4, 8, 8);
+        } else {
+          // 柔和星光尾跡
+          ctx.fillStyle = 'rgba(255, 209, 102, 0.32)';
+          ctx.beginPath();
+          ctx.ellipse(-6, 0, 10, 4.5, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          // 像素星形彈體
+          ctx.fillStyle = '#ffd166';
+          ctx.fillRect(-3, -7, 6, 14);
+          ctx.fillRect(-7, -3, 14, 6);
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(-3, -3, 6, 6);
+        }
         ctx.restore();
       } else if (b.kind === 'boomerang') {
         ctx.save();
@@ -982,27 +1099,29 @@ export class WeaponSystem {
         ctx.rotate(b.spin);
 
         // 發光迴旋光暈
-        ctx.strokeStyle = 'rgba(155, 246, 255, 0.45)';
-        ctx.lineWidth = 2;
+        ctx.strokeStyle = b.evolved
+          ? 'rgba(255, 214, 102, 0.72)'
+          : 'rgba(155, 246, 255, 0.45)';
+        ctx.lineWidth = b.evolved ? 2.6 : 2;
         ctx.beginPath();
-        ctx.arc(0, 0, b.radius + 2, 0, Math.PI * 1.4);
+        ctx.arc(0, 0, b.radius + 2, 0, Math.PI * 1.5);
         ctx.stroke();
 
-        // 可愛像素小魚乾
-        ctx.fillStyle = '#ffd6a5';
-        ctx.strokeStyle = '#6c462f';
+        // 可愛像素小魚乾（超進化為黃金小魚）
+        ctx.fillStyle = b.evolved ? '#ffe066' : '#ffd6a5';
+        ctx.strokeStyle = b.evolved ? '#b36b00' : '#6c462f';
         ctx.lineWidth = 1.6;
         ctx.beginPath();
-        ctx.ellipse(2, 0, 9.5, 5, 0, 0, Math.PI * 2);
+        ctx.ellipse(2, 0, b.evolved ? 11.5 : 9.5, b.evolved ? 6 : 5, 0, 0, Math.PI * 2);
         ctx.fill();
         ctx.stroke();
 
         // 小魚尾鰭
-        ctx.fillStyle = '#f4a261';
+        ctx.fillStyle = b.evolved ? '#ff9f43' : '#f4a261';
         ctx.beginPath();
         ctx.moveTo(-6, 0);
-        ctx.lineTo(-13, -5);
-        ctx.lineTo(-13, 5);
+        ctx.lineTo(-14, -6);
+        ctx.lineTo(-14, 6);
         ctx.closePath();
         ctx.fill();
         ctx.stroke();
@@ -1018,25 +1137,42 @@ export class WeaponSystem {
         ctx.translate(b.x, b.y);
         ctx.rotate(b.angle + Math.sin(time * 12) * 0.08);
 
-        // 降落中的彈力紙箱
-        ctx.fillStyle = '#c9935b';
-        ctx.fillRect(-14, -12, 28, 24);
-        ctx.strokeStyle = '#5c3c1e';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(-14, -12, 28, 24);
-        ctx.fillStyle = '#e5b884';
-        ctx.fillRect(-13, -11, 26, 5);
-        ctx.fillStyle = '#f7e5c2';
-        ctx.fillRect(-3, -12, 6, 12);
-        // 箱面星星標記
-        ctx.fillStyle = '#ffd166';
-        ctx.fillRect(-2, 2, 4, 6);
-        ctx.fillRect(-4, 4, 8, 2);
+        if (b.evolved) {
+          // 星願禮物雨：粉金星願禮盒
+          ctx.fillStyle = '#ff9ec6';
+          ctx.fillRect(-15, -13, 30, 26);
+          ctx.strokeStyle = '#7a2e4d';
+          ctx.lineWidth = 2;
+          ctx.strokeRect(-15, -13, 30, 26);
+          // 金色緞帶十字
+          ctx.fillStyle = '#ffe680';
+          ctx.fillRect(-3, -13, 6, 26);
+          ctx.fillRect(-15, -3, 30, 6);
+          // 頂部蝴蝶結高光
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(-5, -15, 4, 3);
+          ctx.fillRect(1, -15, 4, 3);
+        } else {
+          // 降落中的彈力紙箱
+          ctx.fillStyle = '#c9935b';
+          ctx.fillRect(-14, -12, 28, 24);
+          ctx.strokeStyle = '#5c3c1e';
+          ctx.lineWidth = 2;
+          ctx.strokeRect(-14, -12, 28, 24);
+          ctx.fillStyle = '#e5b884';
+          ctx.fillRect(-13, -11, 26, 5);
+          ctx.fillStyle = '#f7e5c2';
+          ctx.fillRect(-3, -12, 6, 12);
+          // 箱面星星標記
+          ctx.fillStyle = '#ffd166';
+          ctx.fillRect(-2, 2, 4, 6);
+          ctx.fillRect(-4, 4, 8, 2);
+        }
         ctx.restore();
       }
     }
 
-    // 3. 毛線雷電鏈電弧
+    // 3. 毛線雷電鏈 / 彩虹織星雷電弧
     const arcs = this.lightningArcs.items;
     for (let i = 0; i < arcs.length; i++) {
       const a = arcs[i];
@@ -1056,9 +1192,9 @@ export class WeaponSystem {
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
 
-      // 外層紫金柔光
-      ctx.strokeStyle = '#ffd166';
-      ctx.lineWidth = 5 * alpha;
+      // 外層柔光（超進化為夢幻紫粉極光）
+      ctx.strokeStyle = a.evolved ? '#d6a2ff' : '#ffd166';
+      ctx.lineWidth = (a.evolved ? 6.5 : 5) * alpha;
       ctx.beginPath();
       ctx.moveTo(a.x1, a.y1);
       for (let s = 1; s < segments; s++) {
@@ -1070,21 +1206,21 @@ export class WeaponSystem {
       ctx.stroke();
 
       // 內層純白閃電芯
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 2 * alpha;
+      ctx.strokeStyle = a.evolved ? '#e0fbfc' : '#ffffff';
+      ctx.lineWidth = 2.2 * alpha;
       ctx.stroke();
 
       // 擊中點小星芒
-      ctx.fillStyle = '#fff9db';
-      ctx.fillRect(Math.round(a.x2 - 4), Math.round(a.y2 - 1), 8, 2);
-      ctx.fillRect(Math.round(a.x2 - 1), Math.round(a.y2 - 4), 2, 8);
+      ctx.fillStyle = a.evolved ? '#ffe680' : '#fff9db';
+      ctx.fillRect(Math.round(a.x2 - 5), Math.round(a.y2 - 1), 10, 2);
+      ctx.fillRect(Math.round(a.x2 - 1), Math.round(a.y2 - 5), 2, 10);
       ctx.restore();
     }
   }
 }
 
 // ---------------------------------------------------------------------------
-// 升級三選一卡片智慧生成器（自動過濾滿級武器，並保底穿插回復與屬性強化）
+// 升級三選一卡片智慧生成器（滿級自動出現超進化金卡，並保底穿插回復與屬性強化）
 // ---------------------------------------------------------------------------
 
 function shuffleInPlace(array) {
@@ -1116,7 +1252,23 @@ function buildWeaponCard(weaponId, currentLv) {
   };
 }
 
+function buildEvolutionCard(weaponId) {
+  const spec = WEAPONS[weaponId];
+  const evo = spec.evolution;
+  return {
+    id: `evo_${weaponId}`,
+    kind: 'evolution',
+    weaponId,
+    name: evo.name,
+    icon: evo.icon,
+    badge: '★ 星光超進化',
+    desc: `${spec.name}蛻變：${evo.desc}`,
+    evoColor: evo.color,
+  };
+}
+
 export function generateUpgradeChoices(player, weaponSystem, count = 3) {
+  const evolvable = [];
   const upgradableOwned = [];
   const unlockableNew = [];
 
@@ -1126,6 +1278,9 @@ export function generateUpgradeChoices(player, weaponSystem, count = 3) {
     const lv = weaponSystem.getLevel(id);
 
     if (lv >= spec.maxLv) {
+      if (spec.evolution && !weaponSystem.isEvolved(id)) {
+        evolvable.push(buildEvolutionCard(id));
+      }
       continue;
     }
     if (lv > 0) {
@@ -1135,6 +1290,7 @@ export function generateUpgradeChoices(player, weaponSystem, count = 3) {
     }
   }
 
+  shuffleInPlace(evolvable);
   shuffleInPlace(upgradableOwned);
   shuffleInPlace(unlockableNew);
 
@@ -1197,8 +1353,13 @@ export function generateUpgradeChoices(player, weaponSystem, count = 3) {
     return true;
   };
 
+  // 若有滿級可超進化武器，優先保底放入第 1 張星光金卡
+  if (evolvable.length > 0) {
+    tryPush(evolvable.shift());
+  }
+
   // 先放入最多 (count - 1) 張武器卡，留 1 格穿插回復或屬性保底選項
-  const targetWeaponSlots = Math.min(weaponPool.length, Math.max(0, count - 1));
+  const targetWeaponSlots = Math.min(weaponPool.length + choices.length, Math.max(0, count - 1));
   for (let i = 0; i < weaponPool.length && choices.length < targetWeaponSlots; i++) {
     tryPush(weaponPool[i]);
   }
@@ -1221,6 +1382,16 @@ export function generateUpgradeChoices(player, weaponSystem, count = 3) {
 
 export function applyUpgradeChoice(choice, player, weaponSystem, particles = null) {
   if (!choice) {
+    return;
+  }
+
+  if (choice.kind === 'evolution') {
+    weaponSystem.evolveWeapon(choice.weaponId);
+    if (particles) {
+      const col = choice.evoColor || '#ffe680';
+      particles.spawnRing(player.x, player.y, 14, 110, col, 0.48);
+      particles.spawnBurst(player.x, player.y, 20, col, 175, 0.55);
+    }
     return;
   }
 
@@ -1278,3 +1449,5 @@ export function applyUpgradeChoice(choice, player, weaponSystem, particles = nul
 function roundHalf(value) {
   return Math.round(value * 2) / 2;
 }
+// === src/weapons.js 更新完成 ===
+
