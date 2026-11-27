@@ -141,7 +141,7 @@ export function drawBackground(ctx, cameraX, cameraY, viewW, viewH, stageInput, 
   const worldSize = GAME_CONFIG.WORLD_SIZE;
   const tileSize = 96;
 
-  // 底層星夜色
+  // 1. 底層星夜色
   ctx.fillStyle = palette.bg;
   ctx.fillRect(0, 0, viewW, viewH);
 
@@ -150,74 +150,179 @@ export function drawBackground(ctx, cameraX, cameraY, viewW, viewH, stageInput, 
   const startTy = Math.floor(cameraY / tileSize) - 1;
   const endTy = Math.floor((cameraY + viewH) / tileSize) + 1;
 
-  // 棋盤星光柔格與關卡專屬地面裝飾
+  // 2. 細部地板格紋與關卡專屬微裝飾（96x96）
   for (let ty = startTy; ty <= endTy; ty++) {
     for (let tx = startTx; tx <= endTx; tx++) {
       const sx = Math.round(tx * tileSize - cameraX);
       const sy = Math.round(ty * tileSize - cameraY);
 
       if ((tx + ty) % 2 === 0) {
-        ctx.fillStyle = hexToRgba(palette.grid, 0.36);
+        ctx.fillStyle = hexToRgba(palette.grid, 0.34);
         ctx.fillRect(sx, sy, tileSize, tileSize);
       }
 
       // 細緻像素交點星芒
-      ctx.fillStyle = hexToRgba(palette.grid, 0.55);
+      ctx.fillStyle = hexToRgba(palette.grid, 0.52);
       ctx.fillRect(sx - 1, sy - 1, 2, 2);
 
       const h1 = tileHash(tx, ty, 11);
       const h2 = tileHash(tx, ty, 29);
       const h3 = tileHash(tx, ty, 47);
-      const dx = sx + 14 + Math.floor(h2 * (tileSize - 28));
-      const dy = sy + 14 + Math.floor(h3 * (tileSize - 28));
+      const dx = sx + 16 + Math.floor(h2 * (tileSize - 32));
+      const dy = sy + 16 + Math.floor(h3 * (tileSize - 32));
 
       if (stage.id === 1) {
-        // 第 1 關：星夜野餐草地（像素草叢 + 小花點 + 微光星粒）
-        if (h1 < 0.42) {
-          ctx.fillStyle = hexToRgba(palette.grass, 0.72);
+        // 第 1 關：星夜野餐草地（草叢、小星花、微光螢火）
+        if (h1 < 0.44) {
+          ctx.fillStyle = hexToRgba(palette.grass, 0.78);
           pxRect(ctx, dx - 5, dy, 2, 6);
           pxRect(ctx, dx - 1, dy - 3, 2, 9);
           pxRect(ctx, dx + 3, dy + 1, 2, 5);
-        } else if (h1 < 0.56) {
+          if (h2 > 0.55) {
+            const flowerColor = h3 > 0.5 ? '#ff9ebb' : '#fff3b0';
+            pxRect(ctx, dx - 2, dy - 5, 4, 3, flowerColor);
+            pxRect(ctx, dx - 1, dy - 4, 2, 1, '#ffffff');
+          }
+        } else if (h1 < 0.62) {
           const pulse = 0.45 + 0.35 * Math.sin(time * 2.2 + h2 * 10);
-          drawSoftGlow(ctx, dx, dy, 12, palette.glow, pulse * 0.35);
+          drawSoftGlow(ctx, dx, dy, 13, palette.glow, pulse * 0.35);
           drawPixelStar(ctx, dx, dy, 2.5, hexToRgba(palette.glow, pulse), '#fffdf7');
         }
       } else if (stage.id === 2) {
-        // 第 2 關：晚霞燈籠夜市（石板紋理 + 暖粉燈影光暈）
-        if (h1 < 0.36) {
-          ctx.fillStyle = hexToRgba(palette.grass, 0.45);
-          pxRect(ctx, dx - 10, dy - 4, 20, 8);
-          ctx.fillStyle = hexToRgba(palette.glow, 0.14);
-          pxRect(ctx, dx - 8, dy - 2, 16, 4);
-        } else if (h1 < 0.52) {
+        // 第 2 關：晚霞燈籠夜市（石板紋路、暖金燈影、落櫻光點）
+        if (h1 < 0.42) {
+          ctx.fillStyle = hexToRgba(palette.grass, 0.48);
+          pxRect(ctx, dx - 12, dy - 5, 24, 10);
+          ctx.fillStyle = hexToRgba('#ffffff', 0.06);
+          pxRect(ctx, dx - 10, dy - 4, 20, 2);
+        } else if (h1 < 0.64) {
           const pulse = 0.5 + 0.35 * Math.sin(time * 2.6 + h3 * 12);
-          drawSoftGlow(ctx, dx, dy, 20, palette.glow, pulse * 0.24);
-          pxRect(ctx, dx - 2, dy - 2, 4, 4, hexToRgba('#ffd166', pulse * 0.8));
+          drawSoftGlow(ctx, dx, dy, 20, palette.glow, pulse * 0.28);
+          pxRect(ctx, dx - 2, dy - 2, 4, 4, hexToRgba('#ffd166', pulse * 0.85));
         }
       } else {
-        // 第 3 關：月華竹林溫泉（溫泉水波 + 竹葉倒影 + 月華浮光）
+        // 第 3 關：月華竹林溫泉（竹葉、踏腳石、月華水波）
         if (h1 < 0.34) {
           const wave = Math.sin(time * 2.0 + h2 * 8) * 2;
-          ctx.strokeStyle = hexToRgba(palette.glow, 0.2);
+          ctx.strokeStyle = hexToRgba(palette.glow, 0.24);
           ctx.lineWidth = 2;
           ctx.beginPath();
           ctx.ellipse(dx, dy, 12 + wave * 0.5, 5, 0, 0, Math.PI * 2);
           ctx.stroke();
-        } else if (h1 < 0.58) {
-          ctx.fillStyle = hexToRgba(palette.grass, 0.72);
-          pxRect(ctx, dx - 6, dy, 8, 3);
-          pxRect(ctx, dx - 2, dy - 3, 8, 3);
-        } else if (h1 < 0.68) {
+        } else if (h1 < 0.6) {
+          ctx.fillStyle = hexToRgba(palette.grass, 0.8);
+          pxRect(ctx, dx - 6, dy, 9, 3);
+          pxRect(ctx, dx - 2, dy - 3, 9, 3);
+          if (h2 > 0.6) {
+            drawPixelOval(ctx, dx + 10, dy + 4, 6, 4, hexToRgba('#496b6b', 0.6));
+          }
+        } else if (h1 < 0.72) {
           const pulse = 0.4 + 0.4 * Math.sin(time * 2.4 + h3 * 9);
-          drawSoftGlow(ctx, dx, dy, 14, palette.glow, pulse * 0.3);
-          pxRect(ctx, dx - 1, dy - 1, 3, 3, hexToRgba('#ffffff', pulse * 0.8));
+          drawSoftGlow(ctx, dx, dy, 14, palette.glow, pulse * 0.32);
+          pxRect(ctx, dx - 1, dy - 1, 3, 3, hexToRgba('#ffffff', pulse * 0.85));
         }
       }
     }
   }
 
-  // 輕微視差飄浮星塵微粒（營造柔和星夜深度）
+  // 3. 大場景主題地標層（288x288 巨格，讓移動時更有探索感）
+  const macroSize = 288;
+  const mStartX = Math.floor(cameraX / macroSize) - 1;
+  const mEndX = Math.floor((cameraX + viewW) / macroSize) + 1;
+  const mStartY = Math.floor(cameraY / macroSize) - 1;
+  const mEndY = Math.floor((cameraY + viewH) / macroSize) + 1;
+
+  for (let my = mStartY; my <= mEndY; my++) {
+    for (let mx = mStartX; mx <= mEndX; mx++) {
+      const mh = tileHash(mx, my, 73);
+      if (mh > 0.62) {
+        continue;
+      }
+      const ox = 74 + tileHash(mx, my, 81) * (macroSize - 148);
+      const oy = 74 + tileHash(mx, my, 89) * (macroSize - 148);
+      const lx = Math.round(mx * macroSize + ox - cameraX);
+      const ly = Math.round(my * macroSize + oy - cameraY);
+
+      if (stage.id === 1) {
+        // 第 1 關地標：小野餐墊（粉白格紋＋點心籃）或星花小環
+        if (mh < 0.3) {
+          drawSoftGlow(ctx, lx, ly, 46, '#ffd166', 0.14);
+          pxRect(ctx, lx - 28, ly - 20, 56, 40, 'rgba(255, 245, 228, 0.24)');
+          pxRect(ctx, lx - 28, ly - 10, 56, 8, 'rgba(255, 158, 187, 0.22)');
+          pxRect(ctx, lx - 28, ly + 4, 56, 8, 'rgba(255, 158, 187, 0.22)');
+          pxRect(ctx, lx - 14, ly - 20, 8, 40, 'rgba(255, 209, 102, 0.18)');
+          pxRect(ctx, lx + 8, ly - 20, 8, 40, 'rgba(255, 209, 102, 0.18)');
+          // 小點心盤
+          drawPixelOval(ctx, lx + 8, ly - 4, 7, 5, 'rgba(255, 255, 255, 0.45)');
+          pxRect(ctx, lx + 5, ly - 6, 3, 3, '#ff9ebb');
+          pxRect(ctx, lx + 9, ly - 5, 3, 3, '#95d57b');
+        } else {
+          // 柔和星光花環
+          drawSoftGlow(ctx, lx, ly, 36, '#9bf6ff', 0.14);
+          for (let i = 0; i < 6; i++) {
+            const a = (i / 6) * Math.PI * 2 + mh * 6;
+            const fx = lx + Math.cos(a) * 22;
+            const fy = ly + Math.sin(a) * 16;
+            pxRect(ctx, fx - 2, fy - 2, 4, 4, i % 2 === 0 ? '#ffd166' : '#ff9ebb');
+          }
+        }
+      } else if (stage.id === 2) {
+        // 第 2 關地標：夜市暖光燈籠陣與石板廣場
+        const sway = Math.sin(time * 2.2 + mh * 10) * 2;
+        drawSoftGlow(ctx, lx, ly, 58, '#ff9ebb', 0.22);
+        drawSoftGlow(ctx, lx, ly, 32, '#ffd166', 0.2);
+
+        // 地面圓形祭典石紋
+        ctx.strokeStyle = 'rgba(255, 209, 102, 0.18)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.ellipse(lx, ly, 32, 22, 0, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // 兩盞發光小燈籠裝飾
+        for (let i = -1; i <= 1; i += 2) {
+          const dx = lx + i * 24 + sway * 0.4;
+          const dy = ly - 10;
+          pxRect(ctx, dx - 1, dy - 10, 2, 6, '#5c3c4c');
+          drawPixelOval(ctx, dx, dy, 6.5, 8, 'rgba(255, 143, 171, 0.72)', 'rgba(255, 209, 102, 0.8)', 1.4);
+          pxRect(ctx, dx - 2, dy - 2, 4, 4, 'rgba(255, 243, 176, 0.85)');
+        }
+      } else {
+        // 第 3 關地標：冒煙溫泉小池 或 月下竹林小景
+        if (mh < 0.34) {
+          drawSoftGlow(ctx, lx, ly, 54, '#9bf6ff', 0.2);
+          drawPixelOval(ctx, lx, ly, 36, 23, 'rgba(72, 149, 160, 0.32)', 'rgba(155, 246, 255, 0.35)', 2);
+          const ripple = (time * 0.7 + mh * 5) % 1;
+          ctx.strokeStyle = hexToRgba('#9bf6ff', (1 - ripple) * 0.35);
+          ctx.lineWidth = 1.6;
+          ctx.beginPath();
+          ctx.ellipse(lx, ly, 8 + ripple * 24, 5 + ripple * 14, 0, 0, Math.PI * 2);
+          ctx.stroke();
+          // 溫泉熱氣微升
+          const sy = -((time * 12 + mh * 20) % 18);
+          const sa = Math.max(0, 1 - Math.abs(sy) / 18) * 0.38;
+          ctx.fillStyle = `rgba(255, 255, 255, ${sa})`;
+          pxRect(ctx, lx - 6, ly - 4 + sy, 3, 6);
+          pxRect(ctx, lx + 8, ly - 8 + sy * 0.8, 3, 5);
+        } else {
+          // 靜謐竹節小叢
+          ctx.fillStyle = 'rgba(45, 106, 95, 0.55)';
+          pxRect(ctx, lx - 10, ly - 24, 4, 34);
+          pxRect(ctx, lx + 4, ly - 18, 4, 28);
+          ctx.fillStyle = 'rgba(155, 246, 255, 0.25)';
+          pxRect(ctx, lx - 10, ly - 14, 4, 2);
+          pxRect(ctx, lx - 10, ly - 2, 4, 2);
+          pxRect(ctx, lx + 4, ly - 8, 4, 2);
+          // 飄逸竹葉
+          ctx.fillStyle = 'rgba(82, 168, 138, 0.65)';
+          pxRect(ctx, lx - 16, ly - 20, 8, 3);
+          pxRect(ctx, lx + 7, ly - 16, 9, 3);
+        }
+      }
+    }
+  }
+
+  // 4. 輕微視差飄浮環境微粒（螢火／夜市火星／溫泉月光）
   const parallaxTile = 160;
   const pCamX = cameraX * 0.65;
   const pCamY = cameraY * 0.65;
@@ -229,19 +334,23 @@ export function drawBackground(ctx, cameraX, cameraY, viewW, viewH, stageInput, 
   for (let py = pStartY; py <= pEndY; py++) {
     for (let px = pStartX; px <= pEndX; px++) {
       const h = tileHash(px, py, 91);
-      if (h > 0.55) {
+      if (h > 0.62) {
         continue;
       }
       const ox = tileHash(px, py, 103) * parallaxTile;
       const oy = tileHash(px, py, 127) * parallaxTile;
-      const sx = px * parallaxTile + ox - pCamX;
-      const sy = py * parallaxTile + oy - pCamY + Math.sin(time * 1.4 + h * 15) * 4;
-      const twinkle = 0.25 + 0.45 * (0.5 + 0.5 * Math.sin(time * 3.1 + h * 20));
-      pxRect(ctx, sx, sy, 2, 2, hexToRgba(palette.glow, twinkle));
+      const driftX = Math.cos(time * 0.9 + h * 12) * 5;
+      const driftY = Math.sin(time * 1.4 + h * 15) * 5;
+      const sx = px * parallaxTile + ox - pCamX + driftX;
+      const sy = py * parallaxTile + oy - pCamY + driftY;
+      const twinkle = 0.3 + 0.5 * (0.5 + 0.5 * Math.sin(time * 3.1 + h * 20));
+      const particleColor =
+        stage.id === 2 ? (h > 0.3 ? '#ffd166' : '#ff9ebb') : palette.glow;
+      pxRect(ctx, sx, sy, h > 0.45 ? 3 : 2, h > 0.45 ? 3 : 2, hexToRgba(particleColor, twinkle));
     }
   }
 
-  // 場地邊界柔光星牆（WORLD_SIZE x WORLD_SIZE）
+  // 5. 場地邊界柔光星牆（WORLD_SIZE x WORLD_SIZE）
   const bx = -cameraX;
   const by = -cameraY;
   const bw = worldSize;
