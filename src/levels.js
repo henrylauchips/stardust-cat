@@ -161,27 +161,51 @@ export class LevelDirector {
     const duration = GAME_CONFIG.STAGE_DURATION; // 120 秒
     const t = this.elapsed;
 
-    // 1. 判斷當前波次階段與溫和提示
-    if (t < 30) {
+        // 1. 判斷當前波次階段與醒目提示（20s / 50s / 75s 新波次 + 號角音效）
+    if (t < 1) {
+      this.waveStep = 0;
+    }
+    if (t < 20) {
       this.phase = 'warmup';
+    } else if (t < 50) {
+      this.phase = 'escalate';
+      if (this.waveStep < 1) {
+        this.waveStep = 1;
+        this.showBanner('⚡ 第二波小怪集結！', '敵人開始增強，善用升級武器應戰', 2.6);
+        if (callbacks && typeof callbacks.onWaveAlert === 'function') {
+          callbacks.onWaveAlert(2);
+        }
+      }
     } else if (t < 75) {
       this.phase = 'escalate';
+      if (this.waveStep < 2) {
+        this.waveStep = 2;
+        this.showBanner('⚡ 第三波混合怪群來襲！', '多種可愛小怪同時現身，注意走位', 2.6);
+        if (callbacks && typeof callbacks.onWaveAlert === 'function') {
+          callbacks.onWaveAlert(3);
+        }
+      }
     } else if (t < 115) {
       this.phase = 'rush';
-      if (!this.rushAnnounced) {
+      if (this.waveStep < 3) {
+        this.waveStep = 3;
         this.rushAnnounced = true;
-        this.showBanner('星夜小怪潮來襲！', '保持移動，小心走位收集星塵', 2.6);
+        this.showBanner('🔥 星夜大怪潮衝刺！', '撐住最後衝刺，準備迎接關卡 Boss', 2.8);
+        if (callbacks && typeof callbacks.onWaveAlert === 'function') {
+          callbacks.onWaveAlert(4);
+        }
       }
     } else if (t < duration) {
       this.phase = 'pre_boss';
       if (!this.bossWarningAnnounced) {
         this.bossWarningAnnounced = true;
-        this.showBanner('星光震動中…', `${this.stage.boss.name} 即將登場`, 3.2);
+        this.showBanner('⚠️ 星光劇烈震動…', `${this.stage.boss.name} 即將登場！`, 3.2);
         if (callbacks && typeof callbacks.onBossIncoming === 'function') {
           callbacks.onBossIncoming(this.stage.boss);
         }
       }
     }
+
 
     // 2. 每 30 秒（30s、60s、90s）於玩家附近安全位置掉落驚喜道具
     if (t >= this.nextPickupSec && this.nextPickupSec < duration) {
