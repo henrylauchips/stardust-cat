@@ -650,13 +650,35 @@ class StardustCatApp {
       audio.playHurt();
     }
 
-    // 5. 星塵磁鐵平滑吸附與升級檢查
+        // 5. 星塵磁鐵平滑吸附、星光派對充能與升級檢查
     this.gemPool.update(dt, this.player, (_xp, _stars, res) => {
       audio.playGemCollect();
+
+      if (typeof this.player.addFever === 'function' && this.player.addFever(1)) {
+        audio.playFeverStart();
+        this.enemyPool.knockbackAll(
+          this.player.x,
+          this.player.y,
+          260,
+          240,
+          14 * this.player.dmgMult,
+          this.combatCallbacks
+        );
+        this.particlePool.spawnRing(this.player.x, this.player.y, 18, 220, '#ff9ec6', 0.45);
+        this.particlePool.spawnBurst(this.player.x, this.player.y, 22, '#ffe680', 190, 0.52);
+        this.shake.add(5.0, 12);
+        if (typeof this.ui.showToast === 'function') {
+          this.ui.showToast('✨ 星光派對 Fever Time！攻速與吸星大幅提升！');
+        } else if (typeof this.ui.showBanner === 'function') {
+          this.ui.showBanner('✨ 星光派對 Fever Time！');
+        }
+      }
+
       if (res && res.leveledUp) {
         this._openLevelUpIfPending();
       }
     });
+    // === 區塊 1 更新完成 ===
 
     // 6. 場地驚喜道具拾取
     this.pickupPool.update(dt, this.player, (type, px, py) => {
@@ -698,10 +720,27 @@ class StardustCatApp {
       muted: storage.getData().muted,
     });
 
+        // 星光派對期間：貓咪周圍柔和飄散粉金星塵（輕量不掉幀）
+    if (typeof this.player.isFeverActive === 'function' && this.player.isFeverActive()) {
+      if (Math.random() < dt * 10) {
+        const col = Math.random() < 0.5 ? '#ffe680' : '#ff9ec6';
+        this.particlePool.spawnBurst(
+          this.player.x + (Math.random() - 0.5) * 28,
+          this.player.y + (Math.random() - 0.5) * 28,
+          2,
+          col,
+          65,
+          0.36
+        );
+      }
+    }
+
     // 11. 確認玩家是否耗盡生命
     if (this.player.dead) {
       this._handlePlayerDefeat();
     }
+    // === 區塊 2 更新完成 ===
+
   }
 
   _render() {
