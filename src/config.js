@@ -85,6 +85,12 @@ export const WEAPONS = {
     maxLv: 5,
     baseCd: 0.72,
     baseDmg: 14,
+    evolution: {
+      name: '銀河流星雨',
+      icon: '🌠',
+      desc: '連發穿透星塵流星，命中綻放柔和星花',
+      color: '#ffe680',
+    },
   },
   fish_boomerang: {
     id: 'fish_boomerang',
@@ -94,6 +100,12 @@ export const WEAPONS = {
     maxLv: 5,
     baseCd: 1.45,
     baseDmg: 18,
+    evolution: {
+      name: '雙星金魚舞',
+      icon: '🐠',
+      desc: '成對旋飛的黃金小魚乾，軌跡擴大並灑落星塵',
+      color: '#ffb86c',
+    },
   },
   bubble_shield: {
     id: 'bubble_shield',
@@ -103,6 +115,12 @@ export const WEAPONS = {
     maxLv: 5,
     baseCd: 0.1,
     baseDmg: 12,
+    evolution: {
+      name: '星環極光泡',
+      icon: '🪐',
+      desc: '高速旋轉的極光星環，強力震退周圍小怪',
+      color: '#8be9fd',
+    },
   },
   yarn_lightning: {
     id: 'yarn_lightning',
@@ -112,6 +130,12 @@ export const WEAPONS = {
     maxLv: 5,
     baseCd: 1.9,
     baseDmg: 24,
+    evolution: {
+      name: '彩虹織星雷',
+      icon: '🌈',
+      desc: '柔光彩虹電鏈超遠連鎖，每次跳躍皆落星芒',
+      color: '#d6a2ff',
+    },
   },
   catnip_aura: {
     id: 'catnip_aura',
@@ -121,6 +145,12 @@ export const WEAPONS = {
     maxLv: 5,
     baseCd: 0.45,
     baseDmg: 8,
+    evolution: {
+      name: '夢境花田域',
+      icon: '🌸',
+      desc: '大幅擴展的櫻粉星花領域，強力緩速並定時綻放星波',
+      color: '#ff9ec6',
+    },
   },
   box_airdrop: {
     id: 'box_airdrop',
@@ -130,8 +160,15 @@ export const WEAPONS = {
     maxLv: 5,
     baseCd: 2.3,
     baseDmg: 32,
+    evolution: {
+      name: '星願禮物雨',
+      icon: '🎁',
+      desc: '連環空降星願禮盒，擴大範圍震退並爆出星塵',
+      color: '#ffd166',
+    },
   },
 };
+
 
 export const STAGES = [
   {
